@@ -1,0 +1,114 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon May 19 00:37:38 2014
+
+@author: appanacca
+
+
+"""
+
+from __future__  import division
+import numpy as np
+import matplotlib.pyplot as plt
+import sys as sys
+import chebdif as cb
+import scipy.linalg as lin
+
+
+
+
+
+class fluid:
+	"""\
+	fluid: Perform a linear stability analysis after building the operator(ex.Orr-Sommerfeld)
+	"""
+	def __init__(self,start=-1,end=1,N=200,**kwargs):
+		self.N=N
+		self.y=np.linspace(start,end,N)
+		self.U=np.zeros(len(self.y))
+		self.CD=np.zeros(len(self.y))
+		self.dU=np.zeros(len(self.y))
+		self.ddU=np.zeros(len(self.y))
+
+	def read_velocity_profile(self,file):
+		in_txt=np.genfromtxt('DATA/H.txt', delimiter=' ',skiprows=1) 
+		self.y=in_txt[:,0]
+		self.U=in_txt[:,1]
+		self.dU=in_txt[:,2]
+		self.ddU=in_txt[:,3]
+		self.aCD=in_txt[:,4]
+		self.daCD=in_txt[:,5]
+
+	def set_poiseuille(self):
+		Upoiseuille=(lambda y: 1-y**2)
+		dUpoiseuille=(lambda y: -y*2)
+		ddUpoiseuille=np.ones(len(self.y))*2
+		self.U=Upoiseuille(self.y)
+		self.dU=dUpoiseuille(self.y)
+		self.ddU=ddUpoiseuille
+
+	def plot_velocity(self):
+		fig, ay = plt.subplots(figsize=(10,10), dpi=50)
+		lines = ay.plot(self.U,self.y,'b',self.dU,self.y,'g',self.ddU,self.y,'r',lw=2)
+		ay.set_ylabel(r'$y$',fontsize=32)
+		lgd=ay.legend((lines),(r'$U$',r'$\delta U$',r'$\delta^2 U$'),loc = 3,ncol=3, bbox_to_anchor = (0,1),fontsize=32)
+		#ax.set_ylim([0.3,0.9])
+		#ax.set_xlim([np.min(time[2*T:3*T]),np.max(time[2*T:3*T])])
+		ay.grid()                                         
+		#plt.tight_layout()
+		fig.savefig('RESULTS'+'couette.png', bbox_extra_artists=(lgd,), bbox_inches='tight',dpi=50)     
+		plt.show(lines)		
+		
+	def diff_matrix(self):
+		self.x, self.D= cb.chebdif(self.N,4)
+  
+  
+     #def mapping(self,method):
+         #più tardi implementa metodi diversi per fare il mapping
+     
+         
+  
+	def build_operator(self):
+         self.A= np.dot(np.diag(self.alpha*self.U),(self.D[1][1]-np.identity(self.N)*self.alpha**2)) -np.diag(self.alpha*self.ddU) +((1/self.Re)*(self.D[1][3] -(2*self.alpha**2)*self.D[1][1] +(self.alpha**4)*np.identity(self.N) ))*(0+1j)
+         self.B=(self.D[1][1]-np.identity(self.N)*self.alpha**2)
+
+
+	def set_perturbation(self):
+         self.alpha=1
+         self.Re=1.e4 
+         
+         
+	def solve_eig(self):
+         self.eigv , self.eigf = lin.eig(self.A,self.B)
+	 self.eigv_re=np.real(self.eigv)
+	 self.eigv_im=np.imag(self.eigv)
+		
+	
+	def plot_spectrum(self):
+		fig, ay = plt.subplots(figsize=(10,10), dpi=50)
+		lines = ay.plot(self.eigv_re,self.eigv_im,'b*',lw=2)
+		ay.set_ylabel(r'$\omega_i$',fontsize=32)
+		ay.set_xlabel(r'$\omega_r$',fontsize=32)
+		#lgd=ay.legend((lines),(r'$U$',r'$\delta U$',r'$\delta^2 U$'),loc = 3,ncol=3, bbox_to_anchor = (0,1),fontsize=32)
+		#ax.set_ylim([0.3,0.9])
+		#ax.set_xlim([np.min(time[2*T:3*T]),np.max(time[2*T:3*T])])
+		ay.grid()                                         
+		#plt.tight_layout()
+		fig.savefig('RESULTS'+'spectrum_couette.png', bbox_inches='tight',dpi=50)     
+		plt.show(lines)	
+	
+
+cc=fluid()
+
+#cc.read_velocity_profile('DATA/H.txt')
+cc.set_poiseuille()
+cc.plot_velocity()
+cc.set_perturbation()
+cc.diff_matrix()
+
+cc.build_operator()
+
+cc.solve_eig()
+cc.plot_spectrum()
+
+#print DM
