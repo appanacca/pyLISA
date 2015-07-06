@@ -176,7 +176,7 @@ class fluid:
 		r=(s +1)/2
 		L=(ymax*np.sqrt(1-r[0]**2) )/(2*r[0])
 		self.y=(L*(s+1))/(np.sqrt((1- ((s+1)**2)/4)))
-		y_inf=(L*(2))/(np.sqrt((1- ((1.999)**2)/4)))
+		y_inf=2000#(L*(1.999))/(np.sqrt((1- ((1.999)**2)/4)))
 		self.y=np.concatenate([np.array([y_inf]), self.y])
 		self.y=np.concatenate([self.y, np.array([0])])
 		K=np.sqrt(self.y**2 +4* L**2)
@@ -200,14 +200,14 @@ class fluid:
 	def LNS(self):
 		I=np.identity(self.N)
 		i=(0+1j)
-		delta=MD[1] -self.apha**2 *I
+		delta=self.MD[1] -self.alpha**2 *I
 		
 		AA1=np.zeros((self.N,self.N))
 		AA2=i*self.alpha*I
 		AA3=self.MD[0]
 
 		AB1=i*self.alpha*I
-		AB2=i*self.alpha*np.diag(self.U) +np.diag(self.aCD*self.U) -(2*self.lc**2 )*(np.dot(np.diag(dU),self.MD[0]) +np.dot( self.MD[1] ,np.diag(self.ddU)) ) -delta/self.Re 
+		AB2=i*self.alpha*np.diag(self.U) +np.diag(self.aCD*self.U) -(2*self.lc**2 )*(np.dot(np.diag(self.dU),self.MD[0]) +np.dot( self.MD[1] ,np.diag(self.ddU)) ) -delta/self.Re 
 
 		AB3=np.diag(self.dU)
 
@@ -220,9 +220,21 @@ class fluid:
 
 	def interpolate(self):
 		f_U=intp.interp1d(self.y_data,self.U_data)
+		idx=np.where(self.y<self.y_data[-1])
+		y_int=self.y[idx]
+		self.U=np.concatenate([(np.ones(len(self.y)-len(y_int)))*self.U_data[-1],f_U(y_int)]) 
 		
+		f_dU=intp.interp1d(self.y_data,self.dU_data)		
+		self.dU=np.concatenate([(np.ones(len(self.y)-len(y_int)))*0,f_dU(y_int)]) 
+		
+		f_ddU=intp.interp1d(self.y_data,self.ddU_data)		
+		self.ddU=np.concatenate([(np.ones(len(self.y)-len(y_int)))*0,f_ddU(y_int)]) 
 
-
+		f_aCD=intp.interp1d(self.y_data,self.aCD_data)		
+		self.aCD=np.concatenate([(np.ones(len(self.y)-len(y_int)))*0,f_aCD(y_int)]) 
+		plt.plot(self.aCD,self.y,'b*')
+		plt.show()
+		
 
 
 cc=fluid(-1,1,300)
@@ -232,16 +244,21 @@ cc=fluid(-1,1,300)
 #cc.plot_velocity()
 cc.set_perturbation(1,1e4)
 cc.diff_matrix()
-cc.set_poiseuille()
+#cc.set_poiseuille()
+cc.read_velocity_profile('DATA/H.txt')
 
-cc.build_operator()
+#cc.build_operator()
 
-cc.BC1()
-cc.solve_eig()
-cc.plot_spectrum()
+#cc.BC1()
+
+#cc.solve_eig()
+#cc.plot_spectrum()
 
 
 cc.mapping(1000)
+
+cc.interpolate()
+cc.LNS()
 
 #I=np.identity(10)
 #print (  np.diag(cc.alpha*cc.U)   )
