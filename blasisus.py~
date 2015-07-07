@@ -39,7 +39,7 @@ for i in range(len(f2shot)):
 v = (0.5*(f1*n - f))
 # plotting x-component of velocity
 plt.figure()
-plt.plot(f1,n,f2,n)
+plt.plot(f1,n)
 plt.plot(v,n)
 plt.ylabel('$\eta$',fontsize=18)
 plt.xlabel('$u/u_\infty$',fontsize=18)
