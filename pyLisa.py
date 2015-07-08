@@ -35,15 +35,16 @@ class fluid(object):
 
 
 	def read_velocity_profile(self,in_file):
+		e=1
 		in_txt=np.genfromtxt(in_file, delimiter=' ',skiprows=1) 
 		self.y_data=in_txt[:,0]
 		self.U_data=in_txt[:,1]
 		self.dU_data=in_txt[:,2]
 		self.ddU_data=in_txt[:,3]
 		#self.aCD_data=np.zeros(len(self.y_data))
-		self.aCD_data=in_txt[:,4]
+		self.aCD_data=e*in_txt[:,4]
 		#self.daCD_data=in_txt[:,5]
-		self.lc=0.16898  #lc*=0.22*(h-z1) / h 
+		self.lc=0.16739  #lc*=0.22*(h-z1) / h 
 
 	def set_poiseuille(self):
 		Upoiseuille=(lambda y: 1-y**2)
@@ -136,9 +137,9 @@ class fluid(object):
 		 self.eigv, self.eigf  = lin.eig(self.A,self.B) #, left=True, right=True)
 
 		 #remove the infinite and nan eigenvectors, and their eigenfunctions
-		 """selector=np.isfinite(self.eigv)
+		 selector=np.isfinite(self.eigv)
 		 self.eigv=self.eigv[selector]
-		 self.eigf=self.eigf[:,selector]"""
+		 self.eigf=self.eigf[:,selector]
 
 		 self.eigv_re=np.real(self.eigv)
 		 self.eigv_im=np.imag(self.eigv)
@@ -240,7 +241,7 @@ class fluid(object):
 		AA3=self.D[0]
 
 		AB1=i*self.alpha*I
-		AB2=i*self.alpha*np.diag(self.U)  +np.diag(self.aCD*self.U) #-delta/self.Re -(2*self.lc**2 )*(np.dot(np.diag(self.dU),self.D[1]) + np.dot( self.D[0] ,np.diag(self.ddU))     )  
+		AB2=i*self.alpha*np.diag(self.U)  +np.diag(self.aCD*self.U) #-delta/self.Re   -(2*self.lc**2 )*(np.dot(np.diag(self.dU),self.D[1]) + np.dot( self.D[0] ,np.diag(self.ddU))     )  
 
 		AB3=np.diag(self.dU)
 
@@ -320,7 +321,7 @@ class fluid(object):
 			ay.set_ylabel(r'$\omega_i$',fontsize=32)
 			ay.set_xlabel(r'$\omega_r$',fontsize=32)
 			#lgd=ay.legend((lines),(r'$U$',r'$\delta U$',r'$\delta^2 U$'),loc = 3,ncol=3, bbox_to_anchor = (0,1),fontsize=32)
-			ay.set_ylim([-1,0.1])
+			ay.set_ylim([-1,20])
 			ay.set_xlim([0, 1.8])
 			ay.grid()                                         
 			#plt.tight_layout()
@@ -375,18 +376,44 @@ class fluid(object):
 			plt.show(lines)	
 
 
+	def omega_alpha_curves(self,alpha_start,alpha_end, n_step):
+		self.vec_alpha=np.linspace(alpha_start, alpha_end,n_step)
+		self.vec_eigv_im=np.zeros(n_step)
+		for i in np.arange(n_step):
+			self.set_perturbation(self.vec_alpha[i],self.Re)
+			self.LNS()
+			self.BC_LNS()
+			self.solve_eig()
+			#self.vec_eigv_im[i]=np.max(self.eigv_im)
+			
+			self.vec_eigv_im[i]=np.max(self.eigv_im[self.eigv_im<1])
+			
+
+
+			#print self.eigv_im
+		fig, ay = plt.subplots(dpi=50)
+		lines = ay.plot(self.vec_alpha,self.vec_eigv_im,'b',lw=2)
+		ay.set_ylabel(r'$\omega_i$',fontsize=32)
+		ay.set_xlabel(r'$\alpha$',fontsize=32)
+		#lgd=ay.legend((lines),(r'$U$',r'$\delta U$',r'$\delta^2 U$'),loc = 3,ncol=3, bbox_to_anchor = (0,1),fontsize=32)
+		#ay.set_ylim([-1,0.1])
+		#ay.set_xlim([0, 1.8])
+		ay.grid()                                         
+		#plt.tight_layout()
+		fig.savefig('os_all.png', bbox_inches='tight',dpi=50)     
+		plt.show(lines)
 
 
 		
-cc=fluid(-1,1,400)
+cc=fluid(-1,1,200)
 
 
 
 
-cc.set_perturbation(0.4,160)
+cc.set_perturbation(0.6,160)
 cc.diff_matrix()
 #cc.set_poiseuille()
-cc.read_velocity_profile('DATA/G.txt')
+cc.read_velocity_profile('DATA/H_disc.txt')
 #cc.read_velocity_profile('DATA/blasius.txt')
 
 """
@@ -407,4 +434,5 @@ cc.LNS()
 cc.BC_LNS()
 cc.solve_eig()
 cc.plot_LNS_eigspectrum()
+#cc.omega_alpha_curves(0.01,1.2,25)
 
