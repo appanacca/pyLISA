@@ -25,7 +25,7 @@ class fluid(object):
 	"""
 	fluid: Perform a linear stability analysis after building the operator(ex.Orr-Sommerfeld)
 	"""
-	def __init__(self,start=-1,end=1,N=200,**kwargs):
+	def __init__(self,start=-1,end=1,N=200,option={},**kwargs):
 		self.N=N
 		self.y=np.linspace(start,end,N)
 		self.U=np.zeros(len(self.y))
@@ -231,7 +231,7 @@ class fluid(object):
 		
 
 
-	def LNS(self):
+	def LNS(self,option):
 		I=np.identity(self.N)
 		i=(0+1j)
 		delta=self.D[1] -self.alpha**2 *I
@@ -241,7 +241,26 @@ class fluid(object):
 		AA3=self.D[0]
 
 		AB1=i*self.alpha*I
-		AB2=i*self.alpha*np.diag(self.U)  +np.diag(self.aCD*self.U) #-delta/self.Re   -(2*self.lc**2 )*(np.dot(np.diag(self.dU),self.D[1]) + np.dot( self.D[0] ,np.diag(self.ddU))     )  
+
+		if option['equation']=='Euler':
+			AB2=i*self.alpha*np.diag(self.U)   
+			AC3=+ i*self.alpha*np.diag(self.U)
+		elif option['equation']=='Euler_CD':
+			AB2=i*self.alpha*np.diag(self.U)  +np.diag(self.aCD*self.U) 
+			AC3=+ i*self.alpha*np.diag(self.U) 
+		elif option['equation']=='LNS':
+			AB2=i*self.alpha*np.diag(self.U)  -delta/self.Re 
+			AC3=+ i*self.alpha*np.diag(self.U)  -delta/self.Re
+		elif option['equation']=='LNS_CD':
+			AB2=i*self.alpha*np.diag(self.U)  -delta/self.Re +np.diag(self.aCD*self.U) 
+			AC3=+ i*self.alpha*np.diag(self.U)  -delta/self.Re
+		elif option['equation']=='LNS_turb':
+			AB2=i*self.alpha*np.diag(self.U)  -delta/self.Re -(2*self.lc**2 )*(np.dot(np.diag(self.dU),self.D[1]) + np.dot( self.D[0] ,np.diag(self.ddU))     )
+			AC3=+ i*self.alpha*np.diag(self.U)  -delta/self.Re
+		elif option['equation']=='LNS_turb_CD':
+			AB2=i*self.alpha*np.diag(self.U)  -delta/self.Re  +np.diag(self.aCD*self.U)  -(2*self.lc**2 )*(np.dot(np.diag(self.dU),self.D[1]) + np.dot( self.D[0] ,np.diag(self.ddU))     )
+			AC3=+ i*self.alpha*np.diag(self.U)  -delta/self.Re
+		
 
 		AB3=np.diag(self.dU)
 
@@ -264,9 +283,21 @@ class fluid(object):
 
 		self.B=np.concatenate((BA,BB,BC))
 
-		
+		if option['equation']=='Euler':
+			self.BC_LNS_neu_v()
+		elif option['equation']=='Euler_CD':
+			self.BC_LNS_neu_v()
+		elif option['equation']=='LNS':
+			self.BC_LNS_neu_u_v()
+		elif option['equation']=='LNS_CD':
+			self.BC_LNS_neu_u_v()
+		elif option['equation']=='LNS_turb':
+			self.BC_LNS_neu_u_v()
+		elif option['equation']=='LNS_turb_CD':
+			self.BC_LNS_neu_u_v()
+			
 
-	def BC_LNS(self):
+	def BC_LNS_neu_u_v(self):
 		idx_bc=np.array([self.N,2*self.N,2*self.N -1,3*self.N-1]) #index of the 
 		
 		self.A[idx_bc,:]=np.zeros(3*self.N)
@@ -281,13 +312,13 @@ class fluid(object):
 		#print self.A, self.B
 
 
-	def BC_LNS_2(self):
-		idx_bc=np.array([self.N,2*self.N,3*self.N -1]) #index of the 
+	def BC_LNS_neu_v(self):
+		idx_bc=np.array([2*self.N,3*self.N -1]) #index of the 
 		
 		self.A[idx_bc,:]=np.zeros(3*self.N)
 		self.B[idx_bc,:]=np.zeros(3*self.N)
 		
-		self.A[self.N,self.N]=1
+		##self.A[self.N,self.N]=1
 		#self.A[2*self.N -1,2*self.N -1]=1
 		
 		self.A[2*self.N ,2*self.N ]=1
@@ -318,10 +349,10 @@ class fluid(object):
 		for i in np.arange(10):
 			fig, ay = plt.subplots(figsize=(10,10), dpi=50)
 			lines = ay.plot(self.eigv_re,self.eigv_im,'b*',lw=2)
-			ay.set_ylabel(r'$\omega_i$',fontsize=32)
-			ay.set_xlabel(r'$\omega_r$',fontsize=32)
+			ay.set_ylabel(r'$c_i$',fontsize=32)
+			ay.set_xlabel(r'$c_r$',fontsize=32)
 			#lgd=ay.legend((lines),(r'$U$',r'$\delta U$',r'$\delta^2 U$'),loc = 3,ncol=3, bbox_to_anchor = (0,1),fontsize=32)
-			ay.set_ylim([-1,20])
+			ay.set_ylim([-1,0.1])
 			ay.set_xlim([0, 1.8])
 			ay.grid()                                         
 			#plt.tight_layout()
@@ -382,11 +413,11 @@ class fluid(object):
 		for i in np.arange(n_step):
 			self.set_perturbation(self.vec_alpha[i],self.Re)
 			self.LNS()
-			self.BC_LNS()
+			self.BC_LNS_neu_v()
 			self.solve_eig()
 			#self.vec_eigv_im[i]=np.max(self.eigv_im)
 			
-			self.vec_eigv_im[i]=np.max(self.eigv_im[self.eigv_im<1])
+			self.vec_eigv_im[i]=self.vec_alpha[i]*np.max(self.eigv_im[self.eigv_im<1])
 			
 
 
@@ -404,8 +435,20 @@ class fluid(object):
 		plt.show(lines)
 
 
+
+
+option={'flow':'couette', \
+	'n_points':200, \
+	'perturbation':{'alpha':0.6, \
+			'Re':160}, \
+	'variables':'primitives', \
+	'equation':'LNS_CD', \
+	'BC':'Neumann'  }
+
+
+
 		
-cc=fluid(-1,1,200)
+cc=fluid(-1,1,200,option)
 
 
 
@@ -413,7 +456,7 @@ cc=fluid(-1,1,200)
 cc.set_perturbation(0.6,160)
 cc.diff_matrix()
 #cc.set_poiseuille()
-cc.read_velocity_profile('DATA/H_disc.txt')
+cc.read_velocity_profile('DATA/G.txt')
 #cc.read_velocity_profile('DATA/blasius.txt')
 
 """
@@ -430,9 +473,9 @@ cc.mapping(1000)
 cc.interpolate()
 #cc.set_blasisus(cc.y)
 cc.plot_velocity()
-cc.LNS()
-cc.BC_LNS()
+cc.LNS(option)
+#cc.BC_LNS_neu_v()
 cc.solve_eig()
 cc.plot_LNS_eigspectrum()
-#cc.omega_alpha_curves(0.01,1.2,25)
+#cc.omega_alpha_curves(0.1,1.6,30)
 
