@@ -18,6 +18,7 @@ import scipy.interpolate as intp
 import scipy.io
 
 import blasius as bl
+import numba as nb
 
 
 
@@ -53,6 +54,14 @@ class fluid(object):
 		self.dU=dUpoiseuille(self.y)
 		self.ddU=ddUpoiseuille
 
+	def set_hyptan(self):
+		Uhyptan=(lambda y: np.tanh(y))
+		dUhyptan=(lambda y: 1/(np.cosh(y)**2))
+		ddUhyptan=(lambda y: 2*(1/np.cosh(y))*(-np.tanh(y)/np.cosh(y) )  )
+		self.U=Uhyptan(self.y)
+		self.dU=dUhyptan(self.y)
+		self.ddU=ddUhyptan(self.y)
+
 
 	def set_blasisus(self,y_gl):
 		self.U, self.dU, self.ddU = bl.blasius(y_gl) 
@@ -72,12 +81,8 @@ class fluid(object):
 		
 	def diff_matrix(self):
 		self.y, self.D= cb.chebdif(self.N,4)  #in this line we re-instanciate the y in gauss lobatto points
-		self.D=self.D + 0j
-		"""
-		self.D1=self.D[0]
-		self.D2=self.D[1]
-		self.D4=self.D[3]
-  		"""
+		self.D=self.D + 0j  # summing 0j is needed in order to make the D matrices immaginary
+		
   
      #def mapping(self,method):
          #più tardi implementa metodi diversi per fare il mapping
@@ -85,17 +90,25 @@ class fluid(object):
          
   
 	def build_operator(self):
-		 I=np.identity(self.N)
-		 self.A= np.dot(np.diag(self.alpha*self.U),(self.D[1]-I*self.alpha**2)) -np.diag(self.alpha*self.ddU) +((1/self.Re)*(self.D[3] -(2*self.alpha**2)*self.D[1] +(self.alpha**4)*I ))*(0+1j)
-		 self.B=(self.D[1]-I*self.alpha**2)
+	        """ this member build the stability operator in the variable v, so you have to eliminate pressure from the equation and get the u=f(v,alpha) from the continuity eq. """ 
+		
+		I=np.identity(self.N)
+		self.A= np.dot(np.diag(self.alpha*self.U),(self.D[1]-I*self.alpha**2)) \
+			-np.diag(self.alpha*self.ddU) \
+			+((1/self.Re)*(self.D[3] -(2*self.alpha**2)*self.D[1] +(self.alpha**4)*I ))*(0+1j)
+
+	self.B=(self.D[1]-I*self.alpha**2)
 
 
 	def set_perturbation(self):
 		 self.alpha=option['perturbation']['alpha']
 		 self.Re=option['perturbation']['Re']
 
+	# cerca di capire come si impostano ste benedette BC in questo caso, BC1 sembra funzionare
 
 	def BC1(self):
+		"""impose the boundary condition as specified in the paper "Modal Stability Theory" ASME 2014 from Hanifi in his examples codes """
+
 		eps=1e-4*(0+1j)
 		
 		#v(inf)=0
@@ -248,9 +261,14 @@ class fluid(object):
 		elif self.option['equation']=='Euler_CD':
 			AB2=i*self.alpha*np.diag(self.U)  +np.diag(self.aCD*self.U) 
 			AC3=+ i*self.alpha*np.diag(self.U) 
+
+		elif self.option['equation']=='Euler_CD_turb':
+			AB2=i*self.alpha*np.diag(self.U)  -(2*self.lc**2 )*(np.dot(np.diag(self.dU),self.D[1]) + np.dot( self.D[0] ,np.diag(self.ddU))     )
+			AC3=+ i*self.alpha*np.diag(self.U)  
+
 		elif self.option['equation']=='LNS':
 			AB2=i*self.alpha*np.diag(self.U)  -delta/self.Re 
-			AC3=+ i*self.alpha*np.diag(self.U)  -delta/self.Re
+			AC3=+ i*self.alpha*np.diag(self.U)  -delta/self.Rea
 		elif self.option['equation']=='LNS_CD':
 			AB2=i*self.alpha*np.diag(self.U)  -delta/self.Re +np.diag(self.aCD*self.U) 
 			AC3=+ i*self.alpha*np.diag(self.U)  -delta/self.Re
@@ -266,7 +284,7 @@ class fluid(object):
 
 		AC1=self.D[0]
 		AC2=np.zeros((self.N,self.N))
-		AC3=+ i*self.alpha*np.diag(self.U) # -delta/self.Re 
+		#AC3=+ i*self.alpha*np.diag(self.U) # -delta/self.Re 
 
 		BA1=BA2=BA3=BB1=BB3=BC1=BC2=np.zeros((self.N,self.N))
 		BB2=BC3=i*self.alpha*I
@@ -286,6 +304,8 @@ class fluid(object):
 		if self.option['equation']=='Euler':
 			self.BC_LNS_neu_v()
 		elif self.option['equation']=='Euler_CD':
+			self.BC_LNS_neu_v()
+		elif self.option['equation']=='Euler_CD_turb':
 			self.BC_LNS_neu_v()
 		elif self.option['equation']=='LNS':
 			self.BC_LNS_neu_u_v()
@@ -346,7 +366,7 @@ class fluid(object):
 		
 
 	def plot_LNS_eigspectrum(self):    
-		for i in np.arange(10):
+		for i in np.arange(1):
 			fig, ay = plt.subplots(figsize=(10,10), dpi=50)
 			lines = ay.plot(self.eigv_re,self.eigv_im,'b*',lw=2)
 			ay.set_ylabel(r'$c_i$',fontsize=32)
@@ -411,7 +431,7 @@ class fluid(object):
 		self.vec_alpha=np.linspace(alpha_start, alpha_end,n_step)
 		self.vec_eigv_im=np.zeros(n_step)
 		for i in np.arange(n_step):
-			self.set_perturbation(self.vec_alpha[i],self.Re)
+			self.set_perturbation_2(self.vec_alpha[i],self.Re)
 			self.LNS()
 			self.BC_LNS_neu_v()
 			self.solve_eig()
@@ -436,6 +456,36 @@ class fluid(object):
 
 
 
+	def omega_alpha_variab_curves(self,alpha_start,alpha_end, n_step):
+		self.vec_alpha=np.linspace(alpha_start, alpha_end,n_step)
+			
+		fig, ay = plt.subplots(dpi=50)
+		
+		@nb.jit
+		for i in np.arange(n_step):
+			self.set_perturbation_2(self.vec_alpha[i],self.Re)
+			self.LNS()
+			self.BC_LNS_neu_v()
+			self.solve_eig()
+
+			#fig, ay = plt.subplots(dpi=50)
+			ay.plot(self.eigv_re,self.eigv_im,'b*',lw=2)
+			ay.set_ylabel(r'$c_i$',fontsize=32)
+			ay.set_xlabel(r'$c_r$',fontsize=32)
+			#lgd=ay.legend((lines),(r'$U$',r'$\delta U$',r'$\delta^2 U$'),loc = 3,ncol=3, bbox_to_anchor = (0,1),fontsize=32)
+			#ay.set_ylim([-1,0.1])
+			#ay.set_xlim([0, 1.8])
+			ay.grid()                                         
+			#plt.tight_layout()
+			#fig.savefig('ci_cr.png', bbox_inches='tight',dpi=50)     
+			#plt.hold(True)
+		fig.savefig('ci_cr.png', bbox_inches='tight',dpi=150)
+		plt.show()
+
+	def set_perturbation_2(self,a,Re):
+		 self.alpha=a
+		 self.Re=Re
+
 
 option={'flow':'DATA/G.txt', \
 	'n_points':200, \
@@ -444,9 +494,9 @@ option={'flow':'DATA/G.txt', \
 	'perturbation':{'alpha':0.6, \
 			'Re':160}, \
 	'variables':'primitives', \
-	'equation':'Euler_CD', \
+	'equation':'LNS_turb_CD', \
 	'BC':'Neumann', \
-	'plot_lim':[[-1,0.1],[0,1.8]]  }
+	'plot_lim':[[-1,0.4],[0,1.8]]  }
 
 
 
@@ -476,9 +526,17 @@ cc.mapping()
 cc.interpolate()
 #cc.set_blasisus(cc.y)
 cc.plot_velocity()
-cc.LNS()
+"""
+for i in np.linspace(0.3,1,10):
+	cc.LNS(i)
+	#cc.BC_LNS_neu_v()
+	cc.solve_eig()
+	cc.plot_LNS_eigspectrum()
+	#cc.omega_alpha_curves(0.01,2,30)"""
+#cc.LNS(0)
 #cc.BC_LNS_neu_v()
-cc.solve_eig()
-cc.plot_LNS_eigspectrum()
-#cc.omega_alpha_curves(0.1,1.6,30)
+#cc.solve_eig()
+#cc.plot_LNS_eigspectrum()
+#cc.omega_alpha_curves(0.01,2,30)
+cc.omega_alpha_variab_curves(0.01,2,30)
 
