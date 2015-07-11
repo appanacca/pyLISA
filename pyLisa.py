@@ -143,7 +143,7 @@ class fluid(object):
 
 
          
-         
+        @nb.jit 
 	def solve_eig(self):
 		 self.eigv, self.eigf  = lin.eig(self.A,self.B) #, left=True, right=True)
 
@@ -371,8 +371,8 @@ class fluid(object):
 			ay.set_ylabel(r'$c_i$',fontsize=32)
 			ay.set_xlabel(r'$c_r$',fontsize=32)
 			#lgd=ay.legend((lines),(r'$U$',r'$\delta U$',r'$\delta^2 U$'),loc = 3,ncol=3, bbox_to_anchor = (0,1),fontsize=32)
-			ay.set_ylim(self.option['plot_lim'][0])
-			ay.set_xlim(self.option['plot_lim'][1])
+			#ay.set_ylim(self.option['plot_lim'][0])
+			#ay.set_xlim(self.option['plot_lim'][1])
 			ay.grid()                                         
 			#plt.tight_layout()
 			fig.savefig('RESULTS'+'spectrum_bla.png', bbox_inches='tight',dpi=50)     
@@ -388,8 +388,9 @@ class fluid(object):
 		
 			eigfun_picked=self.eigf[:,n]
 		
-			print omega_picked, lin.norm(eigfun_picked), len(eigfun_picked)
-
+			print omega_picked
+			
+			"""
 			p=eigfun_picked[0:self.N]
 			u=eigfun_picked[self.N:2*self.N]
 			v=eigfun_picked[2*self.N:3*self.N]
@@ -422,15 +423,15 @@ class fluid(object):
 			ay3.grid()  
 
 			fig2.savefig('RESULTS'+'spfunrum_bla.png', bbox_inches='tight',dpi=50)     
-
+			"""	
 			plt.show(lines)	
 
-
+	@nb.jit
 	def omega_alpha_curves(self,alpha_start,alpha_end, n_step):
 		self.vec_alpha=np.linspace(alpha_start, alpha_end,n_step)
 		self.vec_eigv_im=np.zeros(n_step)
 		for i in np.arange(n_step):
-			self.set_perturbation_2(self.vec_alpha[i],self.Re)
+			self.set_perturbation(self.vec_alpha[i],self.Re)
 			self.LNS()
 			self.BC_LNS_neu_v()
 			self.solve_eig()
@@ -461,7 +462,7 @@ class fluid(object):
 		fig, ay = plt.subplots(dpi=50)
 		
 		for i in np.arange(n_step):
-			self.set_perturbation_2(self.vec_alpha[i],self.Re)
+			self.set_perturbation(self.vec_alpha[i],self.Re)
 			self.LNS()
 			self.BC_LNS_neu_v()
 			self.solve_eig()
@@ -471,13 +472,57 @@ class fluid(object):
 			ay.set_ylabel(r'$c_i$',fontsize=32)
 			ay.set_xlabel(r'$c_r$',fontsize=32)
 			#lgd=ay.legend((lines),(r'$U$',r'$\delta U$',r'$\delta^2 U$'),loc = 3,ncol=3, bbox_to_anchor = (0,1),fontsize=32)
-			#ay.set_ylim([-1,0.1])
-			#ay.set_xlim([0, 1.8])
+			ay.set_ylim([-0.1,0.1])
+			ay.set_xlim([0.8, 0.96])
 			ay.grid()                                         
 			#plt.tight_layout()
 			#fig.savefig('ci_cr.png', bbox_inches='tight',dpi=50)     
 			#plt.hold(True)
+		ay.grid()
 		fig.savefig('ci_cr.png', bbox_inches='tight',dpi=150)
+		plt.show()
+
+	@nb.jit
+	def omega_alpha_variab_curves_only_4(self,alpha_start,alpha_end, n_step):
+		self.vec_alpha=np.linspace(alpha_start, alpha_end,n_step)
+			
+		fig, ay = plt.subplots(dpi=50)
+		colours=['b','g','r','c','m','y','k','w','b','g','r','c','m','y','k','w','b','g','r','c','m','y','k','w','b','g','r','c','m','y','k','w']
+
+
+		for i in np.arange(n_step):
+			self.set_perturbation(self.vec_alpha[i],self.Re)
+			self.LNS()
+			self.BC_LNS_neu_v()
+			self.solve_eig()
+
+			swiched_eig=(self.eigv_re*(0+1j)) +(self.eigv_im*(+1))
+			# in the above line I switch the imaginary and the real part of the 
+			# eigenvalues, because the sort function will sort by real parts, instead I
+			# want to sort by imag part
+
+			sort_swiched_eig=np.sort(swiched_eig)
+
+			sort_eig=sort_swiched_eig.real*(0+1j) +sort_swiched_eig.imag*(+1)
+
+			picked_eig=sort_eig[np.array([-1,-2,-3,-4])]
+				
+			print picked_eig
+
+			#fig, ay = plt.subplots(dpi=50)
+			ay.plot(picked_eig.real,picked_eig.imag,colours[i]+'o',lw=8)
+			ay.annotate(str(i), xy=(picked_eig.real,picked_eig.imag))
+			ay.set_ylabel(r'$c_i$',fontsize=32)
+			ay.set_xlabel(r'$c_r$',fontsize=32)
+			#lgd=ay.legend((lines),(r'$U$',r'$\delta U$',r'$\delta^2 U$'),loc = 3,ncol=3, bbox_to_anchor = (0,1),fontsize=32)
+			#ay.set_ylim([-1,0.1])
+			#ay.set_xlim([0, 1.8])
+			                                         
+			#plt.tight_layout()
+			#fig.savefig('ci_cr.png', bbox_inches='tight',dpi=50)     
+			#plt.hold(True)
+		ay.grid()
+		#fig.savefig('ci_cr.png', bbox_inches='tight',dpi=150)
 		plt.show()
 
 	def set_perturbation(self,a,Re):
@@ -489,12 +534,12 @@ option={'flow':'DATA/G.txt', \
 	'n_points':200, \
 	'lc':0.16739, \
 	'Ymax':300, \
-	'perturbation':{'alpha':0.6, \
+	'perturbation':{'alpha':0.03, \
 			'Re':160}, \
 	'variables':'primitives', \
-	'equation':'LNS_turb_CD', \
+	'equation':'Euler_CD', \
 	'BC':'Neumann', \
-	'plot_lim':[[-1,0.4],[0,1.8]]  }
+	'plot_lim':[[-0.02,0.02],[0.83,0.85]]  }
 
 
 
@@ -504,7 +549,7 @@ cc=fluid(option)
 
 
 
-cc.set_perturbation()
+#cc.set_perturbation()
 cc.diff_matrix()
 #cc.set_poiseuille()
 cc.read_velocity_profile()
@@ -523,18 +568,40 @@ cc.plot_spectrum()
 cc.mapping()
 cc.interpolate()
 #cc.set_blasisus(cc.y)
-cc.plot_velocity()
-"""
-for i in np.linspace(0.3,1,10):
-	cc.LNS(i)
-	#cc.BC_LNS_neu_v()
+#cc.plot_velocity()
+
+a=np.linspace(0.01,2,20)
+omega_sel=np.zeros(len(a))
+for i in np.arange(len(a)):
+	cc.set_perturbation(a[i],160)
+	cc.LNS()
 	cc.solve_eig()
-	cc.plot_LNS_eigspectrum()
-	#cc.omega_alpha_curves(0.01,2,30)"""
-#cc.LNS(0)
-#cc.BC_LNS_neu_v()
+	#cc.plot_LNS_eigspectrum()
+	print cc.eigv[(cc.eigv.real>0.832) & (cc.eigv.real<0.844) & (cc.eigv.imag<0.02) & (cc.eigv.imag>-0.02)]
+
+	omega=a[i]*cc.eigv[(cc.eigv.real>0.8) & (cc.eigv.real<0.825) & (cc.eigv.imag<0.02) & (cc.eigv.imag>-0.05)]
+	omega_sel[i]=omega.imag
+	print omega_sel[i], a[i]
+
+	#cc.plot_LNS_eigspectrum()
+	#cc.omega_alpha_curves(0.01,2,30)
+fig, ay = plt.subplots(dpi=50)
+ay.plot(a,omega_sel,lw=2)
+ay.set_ylabel(r'$\omega_i$',fontsize=32)
+ay.set_xlabel(r'$alpha$',fontsize=32)
+#ay.set_ylim([-1,0.1])
+#ay.set_xlim([0, 1.8])
+#plt.tight_layout()
+#fig.savefig('ci_cr.png', bbox_inches='tight',dpi=50)     
+#plt.hold(True)
+ay.grid()
+#fig.savefig('ci_cr.png', bbox_inches='tight',dpi=150)
+plt.show()
+
+
+#cc.LNS()
 #cc.solve_eig()
 #cc.plot_LNS_eigspectrum()
-#cc.omega_alpha_curves(0.01,2,30)
-cc.omega_alpha_variab_curves(0.01,2,30)
+#cc.omega_alpha_variab_curves(0,2,20)
+#cc.omega_alpha_variab_curves_only_4(0.01,2,10)
 
