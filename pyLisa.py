@@ -34,6 +34,9 @@ class fluid(object):
 		self.CD=np.zeros(len(self.y))
 		self.dU=np.zeros(len(self.y))
 		self.ddU=np.zeros(len(self.y))
+		self.alpha=option['perturbation']['alpha']
+		self.Re=option['perturbation']['Re']
+
 
 
 	def read_velocity_profile(self):
@@ -97,12 +100,8 @@ class fluid(object):
 			-np.diag(self.alpha*self.ddU) \
 			+((1/self.Re)*(self.D[3] -(2*self.alpha**2)*self.D[1] +(self.alpha**4)*I ))*(0+1j)
 
-	self.B=(self.D[1]-I*self.alpha**2)
+		self.B=(self.D[1]-I*self.alpha**2)
 
-
-	def set_perturbation(self):
-		 self.alpha=option['perturbation']['alpha']
-		 self.Re=option['perturbation']['Re']
 
 	# cerca di capire come si impostano ste benedette BC in questo caso, BC1 sembra funzionare
 
@@ -455,13 +454,12 @@ class fluid(object):
 		plt.show(lines)
 
 
-
+	@nb.jit
 	def omega_alpha_variab_curves(self,alpha_start,alpha_end, n_step):
 		self.vec_alpha=np.linspace(alpha_start, alpha_end,n_step)
 			
 		fig, ay = plt.subplots(dpi=50)
 		
-		@nb.jit
 		for i in np.arange(n_step):
 			self.set_perturbation_2(self.vec_alpha[i],self.Re)
 			self.LNS()
@@ -482,7 +480,7 @@ class fluid(object):
 		fig.savefig('ci_cr.png', bbox_inches='tight',dpi=150)
 		plt.show()
 
-	def set_perturbation_2(self,a,Re):
+	def set_perturbation(self,a,Re):
 		 self.alpha=a
 		 self.Re=Re
 
