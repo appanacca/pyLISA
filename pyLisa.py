@@ -58,12 +58,14 @@ class fluid(object):
 		self.ddU=ddUpoiseuille
 
 	def set_hyptan(self):
-		Uhyptan=(lambda y: np.tanh(y))
-		dUhyptan=(lambda y: 1/(np.cosh(y)**2))
-		ddUhyptan=(lambda y: 2*(1/np.cosh(y))*(-np.tanh(y)/np.cosh(y) )  )
+		Uhyptan=(lambda y: 0.5*(1+np.tanh(y)))
+		dUhyptan=(lambda y: 1/(2*np.cosh(y)**2))
+		ddUhyptan=(lambda y: (1/np.cosh(y))*(-np.tanh(y)/np.cosh(y) )  )
 		self.U=Uhyptan(self.y)
 		self.dU=dUhyptan(self.y)
 		self.ddU=ddUhyptan(self.y)
+		self.aCD=np.zeros(self.N)
+
 
 
 	def set_blasisus(self,y_gl):
@@ -75,11 +77,11 @@ class fluid(object):
 		lines = ay.plot(self.U,self.y,'b',self.dU,self.y,'g',self.ddU,self.y,'r',self.aCD,self.y,'m',lw=2)
 		ay.set_ylabel(r'$y$',fontsize=32)
 		lgd=ay.legend((lines),(r'$U$',r'$\delta U$',r'$\delta^2 U$',r'$a^* \dot C_D$'),loc = 3,ncol=3, bbox_to_anchor = (0,1),fontsize=32)
-		ay.set_ylim([0,5])
+		#ay.set_ylim([0,5])
 		#ax.set_xlim([np.min(time[2*T:3*T]),np.max(time[2*T:3*T])])
 		ay.grid()                    
 		#plt.tight_layout()
-		fig.savefig('RESULTS'+'couette.png', bbox_extra_artists=(lgd,), bbox_inches='tight',dpi=50)     
+		#fig.savefig('RESULTS'+'couette.png', bbox_extra_artists=(lgd,), bbox_inches='tight',dpi=50)     
 		plt.show(lines)		
 		
 	def diff_matrix(self):
@@ -98,7 +100,7 @@ class fluid(object):
 		I=np.identity(self.N)
 		self.A= np.dot(np.diag(self.alpha*self.U),(self.D[1]-I*self.alpha**2)) \
 			-np.diag(self.alpha*self.ddU) \
-			+((1/self.Re)*(self.D[3] -(2*self.alpha**2)*self.D[1] +(self.alpha**4)*I ))*(0+1j)
+			#+((1/self.Re)*(self.D[3] -(2*self.alpha**2)*self.D[1] +(self.alpha**4)*I ))*(0+1j)
 
 		self.B=(self.D[1]-I*self.alpha**2)
 
@@ -163,8 +165,8 @@ class fluid(object):
 			ay.set_ylabel(r'$\omega_i$',fontsize=32)
 			ay.set_xlabel(r'$\omega_r$',fontsize=32)
 			#lgd=ay.legend((lines),(r'$U$',r'$\delta U$',r'$\delta^2 U$'),loc = 3,ncol=3, bbox_to_anchor = (0,1),fontsize=32)
-			ay.set_ylim([-1,0.1])
-			ay.set_xlim([0, 1])
+			#ay.set_ylim([-1,0.1])
+			#ay.set_xlim([0, 1])
 			ay.grid()                                         
 			#plt.tight_layout()
 			fig.savefig('RESULTS'+'spectrum_couette.png', bbox_inches='tight',dpi=50)     
@@ -240,7 +242,27 @@ class fluid(object):
 
 		#print self.D[0]
 		
+	def infinite_mapping(self):
+		L=10
+		s_inf=20
+		s=(L/s_inf)**2
+		self.y=(-L*self.y)/(np.sqrt(1+s-self.y**2))
+				
+		xi=np.zeros((self.N,4))
+		xi[:,0]= L**2*np.sqrt(self.y**2*(s + 1)/(L**2 + self.y**2))/(self.y*(L**2 + self.y**2))		
+		xi[:,1]= -3*L**2*np.sqrt(self.y**2*(s + 1)/(L**2 + self.y**2))/(L**4 + 2*L**2*self.y**2 + self.y**4)
+  		xi[:,2]= 3*L**2*np.sqrt(self.y**2*(s + 1)/(L**2 + self.y**2))*(-L**2 + 4*self.y**2)/(self.y*(L**6 + 3*L**4*self.y**2 + 3*L**2*self.y**4 + self.y**6))
+		xi[:,3]= L**2*np.sqrt(self.y**2*(s + 1)/(L**2 + self.y**2))*(45*L**2 - 60*self.y**2)/(L**8 + 4*L**6*self.y**2 + 6*L**4*self.y**4 + 4*L**2*self.y**6 + self.y**8)
 		
+		self.D[0] = np.dot(np.diag(xi[:,0]),self.D[0])
+		self.D[1] = np.dot(np.diag(xi[:,0]**2) , self.D[1]) + np.dot(np.diag(xi[:,1]) , self.D[0])
+		self.D[2] = np.dot(np.diag(xi[:,0]**3) , self.D[2]) + 3*np.dot(np.dot(np.diag(xi[:,0]),np.diag(xi[:,1])) ,self.D[1])   + np.dot(np.diag(xi[:,2]),self.D[0])
+
+		self.D[3] = np.dot(np.diag(xi[:,0]**4),self.D[3])  + 6*np.dot(np.dot(np.diag(xi[:,1]),np.diag(xi[:,0]**2)),self.D[2])      + 4*np.dot(np.dot(np.diag(xi[:,2]),np.diag(xi[:,0])),self.D[1]) + 3*np.dot(np.diag(xi[:,1]**2),self.D[1]) + np.dot(np.diag(xi[:,3]),self.D[0]) 
+		
+		#scipy.io.savemat('test.mat', dict(x=self.D,y=xi))
+
+		#print self.D[0]
 
 
 	def LNS(self):
@@ -267,7 +289,7 @@ class fluid(object):
 
 		elif self.option['equation']=='LNS':
 			AB2=i*self.alpha*np.diag(self.U)  -delta/self.Re 
-			AC3=+ i*self.alpha*np.diag(self.U)  -delta/self.Rea
+			AC3=+ i*self.alpha*np.diag(self.U)  -delta/self.Re
 		elif self.option['equation']=='LNS_CD':
 			AB2=i*self.alpha*np.diag(self.U)  -delta/self.Re +np.diag(self.aCD*self.U) 
 			AC3=+ i*self.alpha*np.diag(self.U)  -delta/self.Re
@@ -282,8 +304,7 @@ class fluid(object):
 		AB3=np.diag(self.dU)
 
 		AC1=self.D[0]
-		AC2=np.zeros((self.N,self.N))
-		#AC3=+ i*self.alpha*np.diag(self.U) # -delta/self.Re 
+		AC2=np.zeros((self.N,self.N)) 
 
 		BA1=BA2=BA3=BB1=BB3=BC1=BC2=np.zeros((self.N,self.N))
 		BB2=BC3=i*self.alpha*I
@@ -365,7 +386,7 @@ class fluid(object):
 		
 
 	def plot_LNS_eigspectrum(self):    
-		for i in np.arange(1):
+		for i in np.arange(10):
 			fig, ay = plt.subplots(figsize=(10,10), dpi=50)
 			lines = ay.plot(self.eigv_re,self.eigv_im,'b*',lw=2)
 			ay.set_ylabel(r'$c_i$',fontsize=32)
@@ -390,7 +411,7 @@ class fluid(object):
 		
 			print omega_picked
 			
-			"""
+			
 			p=eigfun_picked[0:self.N]
 			u=eigfun_picked[self.N:2*self.N]
 			v=eigfun_picked[2*self.N:3*self.N]
@@ -423,7 +444,7 @@ class fluid(object):
 			ay3.grid()  
 
 			fig2.savefig('RESULTS'+'spfunrum_bla.png', bbox_inches='tight',dpi=50)     
-			"""	
+				
 			plt.show(lines)	
 
 	@nb.jit
@@ -433,7 +454,6 @@ class fluid(object):
 		for i in np.arange(n_step):
 			self.set_perturbation(self.vec_alpha[i],self.Re)
 			self.LNS()
-			self.BC_LNS_neu_v()
 			self.solve_eig()
 			#self.vec_eigv_im[i]=np.max(self.eigv_im)
 			
@@ -530,6 +550,8 @@ class fluid(object):
 		 self.Re=Re
 
 
+
+
 option={'flow':'DATA/G.txt', \
 	'n_points':200, \
 	'lc':0.16739, \
@@ -543,7 +565,7 @@ option={'flow':'DATA/G.txt', \
 
 
 
-		
+"""	
 cc=fluid(option)
 
 
@@ -556,6 +578,7 @@ cc.read_velocity_profile()
 #cc.read_velocity_profile('DATA/blasius.txt')
 
 """
+"""
 cc.mapping(1000)
 #cc.interpolate()
 cc.set_blasisus(cc.y)
@@ -563,6 +586,7 @@ cc.build_operator()
 cc.BC1()
 cc.solve_eig()
 cc.plot_spectrum()
+"""
 
 """
 cc.mapping()
@@ -604,4 +628,6 @@ plt.show()
 #cc.plot_LNS_eigspectrum()
 #cc.omega_alpha_variab_curves(0,2,20)
 #cc.omega_alpha_variab_curves_only_4(0.01,2,10)
+
+"""
 

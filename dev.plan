@@ -1,0 +1,41 @@
+-check mapping and implements other types (like infinite ones)
+
+-write a simple doc-string for all the function
+
+-correct the names of the omega inside the solve function (you calculate the C not the omega)
+
+-comments comments comments
+
+- finish the tracking of the unstable modes
+
+- implements hyperbolic tangent test
+
+- save output in files (pyTables??  numpy.save ?? )
+
+- write a postproc.py script that do the post proc of the save data
+
+- built the perturbation field 2D from the u and v solution 
+
+- implements adjoint equation
+
+- compute the sensitivity functions
+
+- documentation with SPINX
+
+- correct the implementation in v variables (like OS)
+
+- correct boundary layer profile
+
+- write a parallel version for compute the neutral curves
+
+- make the analiysis of the results more interactive (bhoke ?? seaborn ?? )
+
+- implement PSE 
+
+- implement spatial stability (like jerome hpfner did)
+
+- something with UQ ??
+
+- secondary instability ??
+
+- optimize with numba ?? cython ??
