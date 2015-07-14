@@ -1,13 +1,13 @@
 from pyLisa import *
 
-option={'flow':'Hyperbolic_tangent', \
-	'n_points':400, \
+option={'flow':'DATA/G.txt', \
+	'n_points':300, \
 	'lc':0.16739, \
 	'Ymax':300, \
-	'perturbation':{'alpha':1.5, \
-			'Re':1e20}, \
+	'perturbation':{'alpha':0.6, \
+			'Re':160}, \
 	'variables':'primitives', \
-	'equation':'Euler', \
+	'equation':'LNS_CD', \
 	'BC':'Neumann', \
 	'plot_lim':[[-0.02,0.02],[0.83,0.85]]  }
 
@@ -15,6 +15,15 @@ option={'flow':'Hyperbolic_tangent', \
 f=fluid(option)
 
 f.diff_matrix()
+f.read_velocity_profile()
+f.mapping()
+f.interpolate()
+f.LNS()
+f.solve_eig()
+f.plot_LNS_eigspectrum()
+#f.omega_alpha_curves(0.0001,2,50)
+
+"""
 f.infinite_mapping()
 f.set_hyptan()
 f.plot_velocity()
@@ -26,8 +35,71 @@ f.plot_LNS_eigspectrum()
 #f.omega_alpha_curves(0.01,0.2,10)
 
 """
+"""
 f.build_operator()
 f.BC1()
 f.solve_eig()
 f.plot_spectrum()
+"""
+
+
+#f.superpose_spectrum(0.0001,2,50)
+
+"""
+a=np.linspace(0.0001,2,50)
+omega_sel=np.zeros(len(a))
+for i in np.arange(len(a)):
+	f.set_perturbation(a[i],160)
+	f.LNS()
+	f.solve_eig()
+	
+	# MODE 2
+	#print f.eigv[(f.eigv.real>0.83) & (f.eigv.real<0.844) & (f.eigv.imag<0.02) & (f.eigv.imag>-0.02)]
+	#omega=a[i]*f.eigv[(f.eigv.real>0.83) & (f.eigv.real<0.844) & (f.eigv.imag<0.02) & (f.eigv.imag>-0.02)]
+
+	# MODE 1
+	#print f.eigv[(f.eigv.real>0.8) & (f.eigv.real<0.83) & (f.eigv.imag<0.013) & (f.eigv.imag>-0.035)]
+	#omega=a[i]*f.eigv[(f.eigv.real>0.8) & (f.eigv.real<0.83) & (f.eigv.imag<0.013) & (f.eigv.imag>-0.035)]
+	
+	# MODE 4
+	#print f.eigv[(f.eigv.real>0.854) & (f.eigv.real<0.873) & (f.eigv.imag<0.017) & (f.eigv.imag>-0.002)]
+	#omega=a[i]*f.eigv[(f.eigv.real>0.854) & (f.eigv.real<0.873) & (f.eigv.imag<0.017) & (f.eigv.imag>-0.002)]
+	
+	# MODE 3
+	if i==0:
+		omega=np.array([0+0j])*a[i]
+	elif i==1:
+		omega=np.array([0+1.326e-2j])*a[i]
+	elif i>1 and i<24:
+		print i
+		print f.eigv[(f.eigv.real>0.84) & (f.eigv.real<0.92) & (f.eigv.imag<0.1) & (f.eigv.imag>0.02)]
+		omega=a[i]*f.eigv[(f.eigv.real>0.84) & (f.eigv.real<0.92) & (f.eigv.imag<0.1) & (f.eigv.imag>0.02)]
+
+	else:
+		print "last"
+		print f.eigv[(f.eigv.real>0.872) & (f.eigv.real<0.8855) & (f.eigv.imag<0.02) & (f.eigv.imag>-0.001)]
+		omega=a[i]*f.eigv[(f.eigv.real>0.872) & (f.eigv.real<0.8855) & (f.eigv.imag<0.02) & (f.eigv.imag>-0.001)]
+
+
+
+	
+	if len(omega)>1:
+		omega_sel[i]=omega.imag[-1]
+	else:
+		omega_sel[i]=omega.imag
+	print omega_sel[i], a[i]
+
+	np.savez('mode_3',a,omega_sel)
+
+	#cc.plot_LNS_eigspectrum()
+	#cc.omega_alpha_curves(0.01,2,30)
+fig, ay = plt.subplots(dpi=150)
+ay.plot(a,omega_sel,lw=2)
+ay.set_ylabel(r'$\omega_i$',fontsize=32)
+ay.set_xlabel(r'$\alpha$',fontsize=32)
+ay.set_ylim([-0.005,0.1])
+ay.set_xlim([0, 2])
+ay.grid()
+fig.savefig('mode_3.png', bbox_inches='tight',dpi=150)     
+plt.show()
 """

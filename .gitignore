@@ -1,3 +1,6 @@
+*.html
+*.npy
+*.npz
 *.png
 *.m
 *.pyc

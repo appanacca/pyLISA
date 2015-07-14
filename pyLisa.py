@@ -20,6 +20,9 @@ import scipy.io
 import blasius as bl
 import numba as nb
 
+import bokeh.plotting as bkpl
+import bokeh.models as bkmd
+
 
 
 class fluid(object):
@@ -387,8 +390,9 @@ class fluid(object):
 
 	def plot_LNS_eigspectrum(self):    
 		for i in np.arange(10):
+			plt.rcParams.update({'font.size': 35})
 			fig, ay = plt.subplots(figsize=(10,10), dpi=50)
-			lines = ay.plot(self.eigv_re,self.eigv_im,'b*',lw=2)
+			lines = ay.plot(self.eigv_re,self.eigv_im,'b*',lw=5)
 			ay.set_ylabel(r'$c_i$',fontsize=32)
 			ay.set_xlabel(r'$c_r$',fontsize=32)
 			#lgd=ay.legend((lines),(r'$U$',r'$\delta U$',r'$\delta^2 U$'),loc = 3,ncol=3, bbox_to_anchor = (0,1),fontsize=32)
@@ -420,7 +424,7 @@ class fluid(object):
 			fig2, (ay1,ay2,ay3) = plt.subplots(1,3)#, dpi=50)
 			lines1 = ay1.plot(np.real(p),self.y,'r',np.imag(p),self.y,'g',np.sqrt(p*np.conjugate(p)),self.y,'m',lw=2)
 			ay1.set_ylabel(r'$y$',fontsize=32)
-			ay1.set_xlabel(r"$p^'$",fontsize=32)	
+			ay1.set_xlabel(r"$p$",fontsize=32)	
 			lgd=ay1.legend((lines1),(r'$Re$',r'$Im$',r'$Mod$'),loc = 3,ncol=3, bbox_to_anchor = (0,1),fontsize=32)
 			ay1.set_ylim([0,5])
 			#ay1.set_xlim([-1, 1])
@@ -428,7 +432,7 @@ class fluid(object):
 		
 			lines2 = ay2.plot(np.real(u),self.y,'r',np.imag(u),self.y,'g',np.sqrt(u*np.conjugate(u)),self.y,'m',lw=2)
 			ay2.set_ylabel(r'$y$',fontsize=32)
-			ay2.set_xlabel(r"$u^'$",fontsize=32)	
+			ay2.set_xlabel(r"$u$",fontsize=32)	
 			#lgd=ay2.legend((lines2),(r'$Re$',r'$Im$',r'$Mod$'),loc = 3,ncol=3, bbox_to_anchor = (0,1),fontsize=32)
 			ay2.set_ylim([0,5])
 			#ay2.set_xlim([-1, 1])
@@ -437,13 +441,13 @@ class fluid(object):
 
 			lines3 = ay3.plot(np.real(v),self.y,'r',np.imag(v),self.y,'g',np.sqrt(v*np.conjugate(v)),self.y,'m',lw=2)
 			ay3.set_ylabel(r'$y$',fontsize=32)
-			ay3.set_xlabel(r"$v^'$",fontsize=32)	
+			ay3.set_xlabel(r"$v$",fontsize=32)	
 			#lgd=ay3.legend((lines3),(r'$Re$',r'$Im$',r'$Mod$'),loc = 3,ncol=3, bbox_to_anchor = (0,1),fontsize=32)
 			ay3.set_ylim([0,5])
 			#ay3.set_xlim([-1, 1])
 			ay3.grid()  
 
-			fig2.savefig('RESULTS'+'spfunrum_bla.png', bbox_inches='tight',dpi=50)     
+			fig2.savefig('fun.png', bbox_inches='tight',dpi=150)     
 				
 			plt.show(lines)	
 
@@ -462,7 +466,9 @@ class fluid(object):
 
 
 			#print self.eigv_im
-		fig, ay = plt.subplots(dpi=50)
+		np.savez('euler_cd_turb',self.vec_alpha,self.vec_eigv_im)
+	
+		fig, ay = plt.subplots(dpi=150)
 		lines = ay.plot(self.vec_alpha,self.vec_eigv_im,'b',lw=2)
 		ay.set_ylabel(r'$\omega_i$',fontsize=32)
 		ay.set_xlabel(r'$\alpha$',fontsize=32)
@@ -471,7 +477,7 @@ class fluid(object):
 		#ay.set_xlim([0, 1.8])
 		ay.grid()                                         
 		#plt.tight_layout()
-		fig.savefig('os_all.png', bbox_inches='tight',dpi=50)     
+		fig.savefig('euler_cd_turb.png', bbox_inches='tight',dpi=150)     
 		plt.show(lines)
 
 
@@ -479,7 +485,7 @@ class fluid(object):
 	def omega_alpha_variab_curves(self,alpha_start,alpha_end, n_step):
 		self.vec_alpha=np.linspace(alpha_start, alpha_end,n_step)
 			
-		fig, ay = plt.subplots(dpi=50)
+		fig, ay = plt.subplots(dpi=150)
 		
 		for i in np.arange(n_step):
 			self.set_perturbation(self.vec_alpha[i],self.Re)
@@ -548,6 +554,49 @@ class fluid(object):
 	def set_perturbation(self,a,Re):
 		 self.alpha=a
 		 self.Re=Re
+
+
+	def superpose_spectrum(self,alpha_start,alpha_end, n_step):
+		self.vec_alpha=np.linspace(alpha_start, alpha_end,n_step)
+					
+		
+		sp_re=np.array([])
+		sp_im=np.array([])
+		
+		bkpl.output_file("spectrum.html")
+		
+
+		TOOLS="resize,crosshair,pan,wheel_zoom,box_zoom,reset,box_select,lasso_select,hover"
+
+		p = bkpl.figure(plot_width=1000, plot_height=600, tools=TOOLS, title="Superimposed spectrum",x_axis_label='c_r', y_axis_label='c_i',x_range=(0.8,0.96), y_range=(-0.05,0.1) )
+
+		COLORS=['aqua', 'blue', 'fuchsia', 'gold', 'green', 'orange', 'red', 'sienna', 'yellow', 'lime']   #from css list
+		j=-1
+		for i in np.arange(n_step):
+			j=j+1
+			self.set_perturbation(self.vec_alpha[i],self.Re)
+			self.LNS()
+			self.BC_LNS_neu_v()
+			self.solve_eig()
+			#sp_re=np.concatenate((sp_re,self.eigv_re))
+			#sp_im=np.concatenate((sp_im, self.eigv_im))
+			sp_re=self.eigv_re.tolist()
+			sp_im=self.eigv_im.tolist()
+			if j>9:
+				j=j-10  #these with the above inizialization is needed for the iteration in the COLOURS list
+			
+			p.circle(sp_re,sp_im, size=10,fill_color=COLORS[j] )
+
+
+
+		#sp_re.tolist()
+		#sp_im.tolist()
+		
+
+		
+		bkpl.show(p)
+
+							
 
 
 
