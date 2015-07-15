@@ -99,13 +99,28 @@ class fluid(object):
   
 	def build_operator(self):
 	        """ this member build the stability operator in the variable v, so you have to eliminate pressure from the equation and get the u=f(v,alpha) from the continuity eq. """ 
-		
 		I=np.identity(self.N)
-		self.A= np.dot(np.diag(self.alpha*self.U),(self.D[1]-I*self.alpha**2)) \
-			-np.diag(self.alpha*self.ddU) \
+		i=(0+1j)
+		delta=self.D[1] -self.alpha**2 *I
+
+
+		CD=np.matrix(np.diag(self.aCD))
+		U=np.matrix(np.diag(self.U))
+		D1=np.matrix(self.D[0])
+		D2=np.matrix(self.D[1])
+		dU=np.matrix(np.diag(self.dU))
+		
+
+		#self.A= np.dot(np.diag(self.alpha*self.U),(self.D[1]-I*self.alpha**2)) \
+		#	-np.diag(self.alpha*self.ddU) \
+			#-(0+1j)*(D1*CD*U*D1 + CD*dU*D1 + CD*U*D2)
 			#+((1/self.Re)*(self.D[3] -(2*self.alpha**2)*self.D[1] +(self.alpha**4)*I ))*(0+1j)
 
-		self.B=(self.D[1]-I*self.alpha**2)
+		self.A= i*np.dot(np.diag(self.U),delta) -i*np.diag(self.ddU) -i*(D1*CD*U*D1 + CD*dU*D1 + CD*U*D2)
+
+			
+
+		self.B=i*delta
 
 
 	# cerca di capire come si impostano ste benedette BC in questo caso, BC1 sembra funzionare
@@ -134,10 +149,18 @@ class fluid(object):
 		self.B[-1,:]=self.A[-1,:]*eps
 
 	def BC2(self):
+		eps=1e-4*(0+1j)
+		
+		#v(inf)=0
 		self.A[0,:]=np.zeros(self.N)
+		self.A[0,0]=1
+		self.B[0,:]=self.A[0,:]*eps
+
+		#v(0)=0
 		self.A[-1,:]=np.zeros(self.N)
-		self.B[0,:]=np.zeros(self.N)
-		self.B[-1,:]=np.zeros(self.N)
+		self.A[-1,-1]=1
+		self.B[-1,:]=self.A[-1,:]*eps
+
 
 
 	def BC3(self):
@@ -165,11 +188,11 @@ class fluid(object):
 		for i in np.arange(10):
 			fig, ay = plt.subplots(figsize=(10,10), dpi=50)
 			lines = ay.plot(self.eigv_re,self.eigv_im,'b*',lw=2)
-			ay.set_ylabel(r'$\omega_i$',fontsize=32)
-			ay.set_xlabel(r'$\omega_r$',fontsize=32)
+			ay.set_ylabel(r'$c_i$',fontsize=32)
+			ay.set_xlabel(r'$c_r$',fontsize=32)
 			#lgd=ay.legend((lines),(r'$U$',r'$\delta U$',r'$\delta^2 U$'),loc = 3,ncol=3, bbox_to_anchor = (0,1),fontsize=32)
-			#ay.set_ylim([-1,0.1])
-			#ay.set_xlim([0, 1])
+			ay.set_xlim([0.4,1.6])
+			ay.set_ylim([-0.02, 0.28])
 			ay.grid()                                         
 			#plt.tight_layout()
 			fig.savefig('RESULTS'+'spectrum_couette.png', bbox_inches='tight',dpi=50)     
@@ -194,7 +217,7 @@ class fluid(object):
 			fig2, (ay2,ay3) = plt.subplots(1,2)#, dpi=50)
 			lines2 = ay2.plot(np.real(u),self.y,'r',np.imag(u),self.y,'g',np.sqrt(u*np.conjugate(u)),self.y,'m',lw=2)
 			ay2.set_ylabel(r'$y$',fontsize=32)
-			ay2.set_xlabel(r"$u^'$",fontsize=32)	
+			ay2.set_xlabel(r"$u$",fontsize=32)	
 			#lgd=ay2.legend((lines2),(r'$Re$',r'$Im$',r'$Mod$'),loc = 3,ncol=3, bbox_to_anchor = (0,1),fontsize=32)
 			ay2.set_ylim([0,5])
 			#ay2.set_xlim([-1, 1])
@@ -203,7 +226,7 @@ class fluid(object):
 
 			lines3 = ay3.plot(np.real(v),self.y,'r',np.imag(v),self.y,'g',np.sqrt(v*np.conjugate(v)),self.y,'m',lw=2)
 			ay3.set_ylabel(r'$y$',fontsize=32)
-			ay3.set_xlabel(r"$v^'$",fontsize=32)	
+			ay3.set_xlabel(r"$v$",fontsize=32)	
 			#lgd=ay3.legend((lines3),(r'$Re$',r'$Im$',r'$Mod$'),loc = 3,ncol=3, bbox_to_anchor = (0,1),fontsize=32)
 			ay3.set_ylim([0,5])
 			#ay3.set_xlim([-1, 1])
@@ -281,7 +304,7 @@ class fluid(object):
 
 		if self.option['equation']=='Euler':
 			AB2=i*self.alpha*np.diag(self.U)   
-			AC3=+ i*self.alpha*np.diag(self.U)
+			AC3=i*self.alpha*np.diag(self.U)
 		elif self.option['equation']=='Euler_CD':
 			AB2=i*self.alpha*np.diag(self.U)  +np.diag(self.aCD*self.U) 
 			AC3=+ i*self.alpha*np.diag(self.U) 
@@ -292,7 +315,7 @@ class fluid(object):
 
 		elif self.option['equation']=='LNS':
 			AB2=i*self.alpha*np.diag(self.U)  -delta/self.Re 
-			AC3=+ i*self.alpha*np.diag(self.U)  -delta/self.Re
+			AC3=i*self.alpha*np.diag(self.U)  -delta/self.Re
 		elif self.option['equation']=='LNS_CD':
 			AB2=i*self.alpha*np.diag(self.U)  -delta/self.Re +np.diag(self.aCD*self.U) 
 			AC3=+ i*self.alpha*np.diag(self.U)  -delta/self.Re
@@ -310,7 +333,7 @@ class fluid(object):
 		AC2=np.zeros((self.N,self.N)) 
 
 		BA1=BA2=BA3=BB1=BB3=BC1=BC2=np.zeros((self.N,self.N))
-		BB2=BC3=i*self.alpha*I
+		BB2=BC3=i*I*self.alpha
 
 		AA=np.concatenate((AA1,AA2,AA3),axis=1)
 		AB=np.concatenate((AB1,AB2,AB3),axis=1)
@@ -457,7 +480,10 @@ class fluid(object):
 		self.vec_eigv_im=np.zeros(n_step)
 		for i in np.arange(n_step):
 			self.set_perturbation(self.vec_alpha[i],self.Re)
-			self.LNS()
+			#self.LNS()
+			print i
+			self.build_operator()
+			self.BC2()
 			self.solve_eig()
 			#self.vec_eigv_im[i]=np.max(self.eigv_im)
 			
