@@ -1,14 +1,13 @@
 from pyLisa import *
 
-option={'flow':'DATA/G.txt', \
+option={'flow':'DATA/blasius.txt', \
 	'n_points':200, \
 	'lc':0.16739, \
-	'Ymax':300, \
+	'Ymax':1000, \
 	'perturbation':{'alpha':0.6, \
 			'Re':160}, \
-	'variables':'primitives', \
-	'equation':'Euler', \
-	'BC':'Neumann', \
+	'variables':'v_eta', \
+	'equation':'LNS', \
 	'plot_lim':[[-0.02,0.02],[0.83,0.85]]  }
 
 
@@ -18,14 +17,14 @@ f.diff_matrix()
 f.read_velocity_profile()
 f.mapping()
 f.interpolate()
-#f.LNS()
-f.build_operator()
-f.BC2()
-#f.solve_eig()
+#f.set_blasisus(f.y)
+
+f.choose_variables()
+f.solve_eig()
 #f.plot_velocity()
-#f.plot_spectrum()
-#f.plot_LNS_eigspectrum()
-f.omega_alpha_curves(0.0001,2,50)
+f.plot_spectrum()
+
+#f.omega_alpha_curves(0.0001,2,50)
 
 """
 option={'flow':'hyp', \

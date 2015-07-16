@@ -43,16 +43,20 @@ class fluid(object):
 
 
 	def read_velocity_profile(self):
+		""" read from a file the velocity profile store in a .txt file and set the variable_data members""" 
 		in_txt=np.genfromtxt(self.option['flow'], delimiter=' ',skiprows=1) 
 		self.y_data=in_txt[:,0]
 		self.U_data=in_txt[:,1]
 		self.dU_data=in_txt[:,2]
 		self.ddU_data=in_txt[:,3]
-		self.aCD_data=in_txt[:,4]
-		#self.daCD_data=in_txt[:,5]
+		#self.aCD_data=in_txt[:,4]
+
+		self.aCD_data=np.zeros(len(self.y_data))
+
 		self.lc=option['lc'] #0.16739  #lc*=0.22*(h-z1) / h 
 
 	def set_poiseuille(self):
+		"""set the members velocity and its derivatives as couette flow"""
 		Upoiseuille=(lambda y: 1-y**2)
 		dUpoiseuille=(lambda y: -y*2)
 		ddUpoiseuille=-np.ones(len(self.y))*2
@@ -61,6 +65,7 @@ class fluid(object):
 		self.ddU=ddUpoiseuille
 
 	def set_hyptan(self):
+		"""set the members velocity and its derivatives as hyperbolic tangent flow"""		
 		Uhyptan=(lambda y: 0.5*(1+np.tanh(y)))
 		dUhyptan=(lambda y: 1/(2*np.cosh(y)**2))
 		ddUhyptan=(lambda y: (1/np.cosh(y))*(-np.tanh(y)/np.cosh(y) )  )
@@ -72,10 +77,23 @@ class fluid(object):
 
 
 	def set_blasisus(self,y_gl):
+		"""set the members velocity and its derivatives as boundary layer flow"""	
 		self.U, self.dU, self.ddU = bl.blasius(y_gl) 
+		self.CD=np.zeros(len(self.y))
+		
+
+
+	def choose_variables(self):
+		""" read the 'variable' option in the option dictionary and select the operator to solve"""
+
+		if self.option['variables']=='v_eta':
+			self.v_eta_operator()
+		elif self.option['variables']=='p_u_v':
+			self.LNS_operator()
 
 
 	def plot_velocity(self):
+		"""plot the velocity profiles"""
 		fig, ay = plt.subplots(figsize=(10,10), dpi=50)
 		lines = ay.plot(self.U,self.y,'b',self.dU,self.y,'g',self.ddU,self.y,'r',self.aCD,self.y,'m',lw=2)
 		ay.set_ylabel(r'$y$',fontsize=32)
@@ -88,6 +106,7 @@ class fluid(object):
 		plt.show(lines)		
 		
 	def diff_matrix(self):
+		"build the differenziation matrix with chebichev discretization  [algoritmh from Reddy & W...]"
 		self.y, self.D= cb.chebdif(self.N,4)  #in this line we re-instanciate the y in gauss lobatto points
 		self.D=self.D + 0j  # summing 0j is needed in order to make the D matrices immaginary
 		
@@ -97,7 +116,7 @@ class fluid(object):
      
          
   
-	def build_operator(self):
+	def v_eta_operator(self):
 	        """ this member build the stability operator in the variable v, so you have to eliminate pressure from the equation and get the u=f(v,alpha) from the continuity eq. """ 
 		I=np.identity(self.N)
 		i=(0+1j)
@@ -108,25 +127,56 @@ class fluid(object):
 		U=np.matrix(np.diag(self.U))
 		D1=np.matrix(self.D[0])
 		D2=np.matrix(self.D[1])
+		D4=np.matrix(self.D[3])
+		
 		dU=np.matrix(np.diag(self.dU))
+		ddU=np.matrix(np.diag(self.ddU))
+
+		
+		if self.option['equation']=='Euler':
+			self.A= np.dot(np.diag(self.U),delta) -np.diag(self.ddU) 
+			self.B=delta
+		elif self.option['equation']=='Euler_CD':
+			self.A= i*np.dot(np.diag(self.U),delta) -i*np.diag(self.ddU) -i*(D1*CD*U*D1 + CD*dU*D1 + CD*U*D2)
+			self.B=i*delta
+		elif self.option['equation']=='Euler_CD_turb':
+			print "not implemented yet"
+		elif self.option['equation']=='LNS':
+			self.A=(i/(self.alpha*self.Re))*(D4 -2*self.alpha**2 *D2 + self.alpha**4 *I) -ddU +U*delta
+			self.B=delta
+		elif self.option['equation']=='LNS_CD':
+			self.A= i*U*delta -i*np.diag(self.ddU) +((1/self.Re)*(self.D[3] -(2*self.alpha**2)*self.D[1] +(self.alpha**4)*I ))*(0+1j) -i*(D1*CD*U*D1 + CD*dU*D1 + CD*U*D2)
+			self.B=i*delta
+		elif self.option['equation']=='LNS_turb':
+			print "not implemented yet"			
+		elif self.option['equation']=='LNS_turb_CD':
+			print "not implemented yet"
+
+
+
+
+		if self.option['equation']=='Euler':
+			self.BC2()
+		elif self.option['equation']=='Euler_CD':
+			self.BC2()			
+		elif self.option['equation']=='Euler_CD_turb':
+			print "not implemented yet"
+		elif self.option['equation']=='LNS':
+			self.BC1()
+		elif self.option['equation']=='LNS_CD':
+			self.BC1()
+		elif self.option['equation']=='LNS_turb':
+			print "not implemented yet"			
+		elif self.option['equation']=='LNS_turb_CD':
+			print "not implemented yet"
 		
 
-		#self.A= np.dot(np.diag(self.alpha*self.U),(self.D[1]-I*self.alpha**2)) \
-		#	-np.diag(self.alpha*self.ddU) \
-			#-(0+1j)*(D1*CD*U*D1 + CD*dU*D1 + CD*U*D2)
-			#+((1/self.Re)*(self.D[3] -(2*self.alpha**2)*self.D[1] +(self.alpha**4)*I ))*(0+1j)
 
-		self.A= i*np.dot(np.diag(self.U),delta) -i*np.diag(self.ddU) -i*(D1*CD*U*D1 + CD*dU*D1 + CD*U*D2)
-
-			
-
-		self.B=i*delta
-
-
-	# cerca di capire come si impostano ste benedette BC in questo caso, BC1 sembra funzionare
 
 	def BC1(self):
-		"""impose the boundary condition as specified in the paper "Modal Stability Theory" ASME 2014 from Hanifi in his examples codes """
+		"""impose the boundary condition as specified in the paper "Modal Stability Theory" ASME 2014 from Hanifi in his examples codes
+		   in v(0), v(inf) , Dv(0) , Dv(inf) all =0
+		"""
 
 		eps=1e-4*(0+1j)
 		
@@ -149,6 +199,10 @@ class fluid(object):
 		self.B[-1,:]=self.A[-1,:]*eps
 
 	def BC2(self):
+		"""impose the boundary condition as specified in the paper "Modal Stability Theory" ASME 2014 from Hanifi in his examples codes
+		   only in the v(0) and v(inf) =0
+		"""
+		
 		eps=1e-4*(0+1j)
 		
 		#v(inf)=0
@@ -162,18 +216,11 @@ class fluid(object):
 		self.B[-1,:]=self.A[-1,:]*eps
 
 
-
-	def BC3(self):
-		self.A=self.A[1:-2,1:-2]
-		self.B=self.B[1:-2,1:-2]
-
-
-
-
          
         @nb.jit 
 	def solve_eig(self):
-		 self.eigv, self.eigf  = lin.eig(self.A,self.B) #, left=True, right=True)
+		 """ solve the eigenvalues problem with the LINPACK subrutines"""
+		 self.eigv, self.eigf  = lin.eig(self.A,self.B) 
 
 		 #remove the infinite and nan eigenvectors, and their eigenfunctions
 		 selector=np.isfinite(self.eigv)
@@ -182,9 +229,17 @@ class fluid(object):
 
 		 self.eigv_re=np.real(self.eigv)
 		 self.eigv_im=np.imag(self.eigv)
+
+
+	def plot_spectrum(self):
+		if self.option['variables']=='v_eta':
+			self.plot_spectrum_v_eta()
+		elif self.option['variables']=='p_u_v':
+			self.plot_LNS()
 		
 	
-	def plot_spectrum(self):
+	def plot_spectrum_v_eta(self):
+		""" plot the spectrum """
 		for i in np.arange(10):
 			fig, ay = plt.subplots(figsize=(10,10), dpi=50)
 			lines = ay.plot(self.eigv_re,self.eigv_im,'b*',lw=2)
@@ -291,7 +346,7 @@ class fluid(object):
 		#print self.D[0]
 
 
-	def LNS(self):
+	def LNS_operator(self):
 		I=np.identity(self.N)
 		i=(0+1j)
 		delta=self.D[1] -self.alpha**2 *I
@@ -407,11 +462,13 @@ class fluid(object):
 
 		f_aCD=intp.interp1d(self.y_data,self.aCD_data)		
 		self.aCD=np.concatenate([(np.ones(len(self.y)-len(y_int)))*0,f_aCD(y_int)]) 
+		
+		
 		#plt.plot(self.aCD,self.y,'b')
 		#plt.show()
 		
 
-	def plot_LNS_eigspectrum(self):    
+	def plot_LNS(self):    
 		for i in np.arange(10):
 			plt.rcParams.update({'font.size': 35})
 			fig, ay = plt.subplots(figsize=(10,10), dpi=50)
@@ -480,10 +537,7 @@ class fluid(object):
 		self.vec_eigv_im=np.zeros(n_step)
 		for i in np.arange(n_step):
 			self.set_perturbation(self.vec_alpha[i],self.Re)
-			#self.LNS()
-			print i
-			self.build_operator()
-			self.BC2()
+			self.choose_variables()			
 			self.solve_eig()
 			#self.vec_eigv_im[i]=np.max(self.eigv_im)
 			
@@ -506,76 +560,6 @@ class fluid(object):
 		fig.savefig('euler_cd_turb.png', bbox_inches='tight',dpi=150)     
 		plt.show(lines)
 
-
-	@nb.jit
-	def omega_alpha_variab_curves(self,alpha_start,alpha_end, n_step):
-		self.vec_alpha=np.linspace(alpha_start, alpha_end,n_step)
-			
-		fig, ay = plt.subplots(dpi=150)
-		
-		for i in np.arange(n_step):
-			self.set_perturbation(self.vec_alpha[i],self.Re)
-			self.LNS()
-			self.BC_LNS_neu_v()
-			self.solve_eig()
-
-			#fig, ay = plt.subplots(dpi=50)
-			ay.plot(self.eigv_re,self.eigv_im,'b*',lw=2)
-			ay.set_ylabel(r'$c_i$',fontsize=32)
-			ay.set_xlabel(r'$c_r$',fontsize=32)
-			#lgd=ay.legend((lines),(r'$U$',r'$\delta U$',r'$\delta^2 U$'),loc = 3,ncol=3, bbox_to_anchor = (0,1),fontsize=32)
-			ay.set_ylim([-0.1,0.1])
-			ay.set_xlim([0.8, 0.96])
-			ay.grid()                                         
-			#plt.tight_layout()
-			#fig.savefig('ci_cr.png', bbox_inches='tight',dpi=50)     
-			#plt.hold(True)
-		ay.grid()
-		fig.savefig('ci_cr.png', bbox_inches='tight',dpi=150)
-		plt.show()
-
-	@nb.jit
-	def omega_alpha_variab_curves_only_4(self,alpha_start,alpha_end, n_step):
-		self.vec_alpha=np.linspace(alpha_start, alpha_end,n_step)
-			
-		fig, ay = plt.subplots(dpi=50)
-		colours=['b','g','r','c','m','y','k','w','b','g','r','c','m','y','k','w','b','g','r','c','m','y','k','w','b','g','r','c','m','y','k','w']
-
-
-		for i in np.arange(n_step):
-			self.set_perturbation(self.vec_alpha[i],self.Re)
-			self.LNS()
-			self.BC_LNS_neu_v()
-			self.solve_eig()
-
-			swiched_eig=(self.eigv_re*(0+1j)) +(self.eigv_im*(+1))
-			# in the above line I switch the imaginary and the real part of the 
-			# eigenvalues, because the sort function will sort by real parts, instead I
-			# want to sort by imag part
-
-			sort_swiched_eig=np.sort(swiched_eig)
-
-			sort_eig=sort_swiched_eig.real*(0+1j) +sort_swiched_eig.imag*(+1)
-
-			picked_eig=sort_eig[np.array([-1,-2,-3,-4])]
-				
-			print picked_eig
-
-			#fig, ay = plt.subplots(dpi=50)
-			ay.plot(picked_eig.real,picked_eig.imag,colours[i]+'o',lw=8)
-			ay.annotate(str(i), xy=(picked_eig.real,picked_eig.imag))
-			ay.set_ylabel(r'$c_i$',fontsize=32)
-			ay.set_xlabel(r'$c_r$',fontsize=32)
-			#lgd=ay.legend((lines),(r'$U$',r'$\delta U$',r'$\delta^2 U$'),loc = 3,ncol=3, bbox_to_anchor = (0,1),fontsize=32)
-			#ay.set_ylim([-1,0.1])
-			#ay.set_xlim([0, 1.8])
-			                                         
-			#plt.tight_layout()
-			#fig.savefig('ci_cr.png', bbox_inches='tight',dpi=50)     
-			#plt.hold(True)
-		ay.grid()
-		#fig.savefig('ci_cr.png', bbox_inches='tight',dpi=150)
-		plt.show()
 
 	def set_perturbation(self,a,Re):
 		 self.alpha=a
@@ -601,8 +585,7 @@ class fluid(object):
 		for i in np.arange(n_step):
 			j=j+1
 			self.set_perturbation(self.vec_alpha[i],self.Re)
-			self.LNS()
-			self.BC_LNS_neu_v()
+			self.choose_variables()
 			self.solve_eig()
 			#sp_re=np.concatenate((sp_re,self.eigv_re))
 			#sp_im=np.concatenate((sp_im, self.eigv_im))
@@ -612,14 +595,6 @@ class fluid(object):
 				j=j-10  #these with the above inizialization is needed for the iteration in the COLOURS list
 			
 			p.circle(sp_re,sp_im, size=10,fill_color=COLORS[j] )
-
-
-
-		#sp_re.tolist()
-		#sp_im.tolist()
-		
-
-		
 		bkpl.show(p)
 
 							
