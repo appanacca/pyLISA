@@ -34,7 +34,7 @@ class fluid(object):
 		self.N=option['n_points']
 		self.y=np.linspace(-1,1,self.option['n_points'])
 		self.U=np.zeros(len(self.y))
-		self.CD=np.zeros(len(self.y))
+		self.aCD=np.zeros(len(self.y))
 		self.dU=np.zeros(len(self.y))
 		self.ddU=np.zeros(len(self.y))
 		self.alpha=option['perturbation']['alpha']
@@ -49,9 +49,10 @@ class fluid(object):
 		self.U_data=in_txt[:,1]
 		self.dU_data=in_txt[:,2]
 		self.ddU_data=in_txt[:,3]
-		#self.aCD_data=in_txt[:,4]
-
-		self.aCD_data=np.zeros(len(self.y_data))
+		self.aCD_data=in_txt[:,4]
+		self.daCD_data=in_txt[:,5]
+		
+		
 
 		self.lc=option['lc'] #0.16739  #lc*=0.22*(h-z1) / h 
 
@@ -95,7 +96,7 @@ class fluid(object):
 	def plot_velocity(self):
 		"""plot the velocity profiles"""
 		fig, ay = plt.subplots(figsize=(10,10), dpi=50)
-		lines = ay.plot(self.U,self.y,'b',self.dU,self.y,'g',self.ddU,self.y,'r',self.aCD,self.y,'m',lw=2)
+		lines = ay.plot(self.U,self.y,'b',self.dU,self.y,'g',self.ddU,self.y,'r',self.aCD,self.y,'m',self.daCD,self.y,'c',lw=2)
 		ay.set_ylabel(r'$y$',fontsize=32)
 		lgd=ay.legend((lines),(r'$U$',r'$\delta U$',r'$\delta^2 U$',r'$a^* \dot C_D$'),loc = 3,ncol=3, bbox_to_anchor = (0,1),fontsize=32)
 		#ay.set_ylim([0,5])
@@ -124,6 +125,7 @@ class fluid(object):
 
 
 		CD=np.matrix(np.diag(self.aCD))
+		dCD=np.matrix(np.diag(self.daCD))
 		U=np.matrix(np.diag(self.U))
 		D1=np.matrix(self.D[0])
 		D2=np.matrix(self.D[1])
@@ -137,16 +139,16 @@ class fluid(object):
 			self.A= np.dot(np.diag(self.U),delta) -np.diag(self.ddU) 
 			self.B=delta
 		elif self.option['equation']=='Euler_CD':
-			self.A= i*np.dot(np.diag(self.U),delta) -i*np.diag(self.ddU) -i*(D1*CD*U*D1 + CD*dU*D1 + CD*U*D2)
-			self.B=i*delta
+			self.A= np.dot(np.diag(self.U),delta) -np.diag(self.ddU) -(i/self.alpha)*(dCD*U*D1 + CD*dU*D1 + CD*U*D2)
+			self.B=delta
 		elif self.option['equation']=='Euler_CD_turb':
 			print "not implemented yet"
 		elif self.option['equation']=='LNS':
 			self.A=(i/(self.alpha*self.Re))*(D4 -2*self.alpha**2 *D2 + self.alpha**4 *I) -ddU +U*delta
 			self.B=delta
 		elif self.option['equation']=='LNS_CD':
-			self.A= i*U*delta -i*np.diag(self.ddU) +((1/self.Re)*(self.D[3] -(2*self.alpha**2)*self.D[1] +(self.alpha**4)*I ))*(0+1j) -i*(D1*CD*U*D1 + CD*dU*D1 + CD*U*D2)
-			self.B=i*delta
+			self.A=(i/(self.alpha*self.Re))*(D4 -2*self.alpha**2 *D2 + self.alpha**4 *I) -ddU +U*delta -(i/self.alpha)*(dCD*U*D1 + CD*dU*D1 + CD*U*D2)			 
+			self.B=delta
 		elif self.option['equation']=='LNS_turb':
 			print "not implemented yet"			
 		elif self.option['equation']=='LNS_turb_CD':
@@ -463,7 +465,11 @@ class fluid(object):
 		f_aCD=intp.interp1d(self.y_data,self.aCD_data)		
 		self.aCD=np.concatenate([(np.ones(len(self.y)-len(y_int)))*0,f_aCD(y_int)]) 
 		
-		
+		f_daCD=intp.interp1d(self.y_data,self.daCD_data)		
+		self.daCD=np.concatenate([(np.ones(len(self.y)-len(y_int)))*0,f_daCD(y_int)]) 
+
+
+
 		#plt.plot(self.aCD,self.y,'b')
 		#plt.show()
 		

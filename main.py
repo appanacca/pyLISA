@@ -1,13 +1,13 @@
 from pyLisa import *
 
-option={'flow':'DATA/blasius.txt', \
+option={'flow':'DATA/G.txt', \
 	'n_points':200, \
 	'lc':0.16739, \
 	'Ymax':1000, \
-	'perturbation':{'alpha':0.6, \
+	'perturbation':{'alpha':1.5, \
 			'Re':160}, \
-	'variables':'v_eta', \
-	'equation':'LNS', \
+	'variables':'p_u_v', \
+	'equation':'Euler_CD', \
 	'plot_lim':[[-0.02,0.02],[0.83,0.85]]  }
 
 
@@ -19,10 +19,14 @@ f.mapping()
 f.interpolate()
 #f.set_blasisus(f.y)
 
+#f.infinite_mapping()
+#f.set_hyptan()
+#f.set_poiseuille()
+
 f.choose_variables()
 f.solve_eig()
-#f.plot_velocity()
 f.plot_spectrum()
+f.plot_velocity()
 
 #f.omega_alpha_curves(0.0001,2,50)
 
