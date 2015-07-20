@@ -40,6 +40,8 @@ class fluid(object):
 		self.alpha=option['perturbation']['alpha']
 		self.Re=option['perturbation']['Re']
 
+		self.Fr=option['Froude']
+		self.cos_alpha=option['slope']
 
 
 	def read_velocity_profile(self):
@@ -244,7 +246,7 @@ class fluid(object):
 		""" plot the spectrum """
 		for i in np.arange(10):
 			fig, ay = plt.subplots(figsize=(10,10), dpi=50)
-			lines = ay.plot(self.eigv_re,self.eigv_im,'b*',lw=2)
+			lines = ay.plot(self.eigv_re,self.eigv_im,'b*',lw=10)
 			ay.set_ylabel(r'$c_i$',fontsize=32)
 			ay.set_xlabel(r'$c_r$',fontsize=32)
 			#lgd=ay.legend((lines),(r'$U$',r'$\delta U$',r'$\delta^2 U$'),loc = 3,ncol=3, bbox_to_anchor = (0,1),fontsize=32)
@@ -294,58 +296,55 @@ class fluid(object):
 	
 		
 	def mapping(self):
-		ymax=self.option['Ymax']
-		s=self.y[1:-1]
-		r=(s +1)/2
-		L=(ymax*np.sqrt(1-r[0]**2) )/(2*r[0])
-		self.y=(L*(s+1))/(np.sqrt((1- ((s+1)**2)/4)))
-		y_inf=2000#(L*(1.999))/(np.sqrt((1- ((1.999)**2)/4)))
-		self.y=np.concatenate([np.array([y_inf]), self.y])
-		self.y=np.concatenate([self.y, np.array([0])])
-		K=np.sqrt(self.y**2 +4* L**2)
-		
-		xi=np.zeros((self.N,4))
-		xi[:, 0] =                           8 * L**2 / K**3 
-  		xi[:, 1] =                    - 24 * self.y * L**2 / K**5
-  		xi[:, 2] =           96 * (self.y**2 - L**2) * L**2 / K**7
-  		xi[:, 3]= 480 * self.y * (3 * L**2 - self.y**2) * L**2 / K**9
+		if self.option['mapping'][0]=='semi_infinite':
+			ymax=self.option['Ymax']
+			s=self.y[1:-1]
+			r=(s +1)/2
+			L=(ymax*np.sqrt(1-r[0]**2) )/(2*r[0])
+			self.y=(L*(s+1))/(np.sqrt((1- ((s+1)**2)/4)))
+			y_inf=2000#(L*(1.999))/(np.sqrt((1- ((1.999)**2)/4)))
+			self.y=np.concatenate([np.array([y_inf]), self.y])
+			self.y=np.concatenate([self.y, np.array([0])])
+			K=np.sqrt(self.y**2 +4* L**2)
+			
+			xi=np.zeros((self.N,4))
+			xi[:, 0] =                           8 * L**2 / K**3 
+			xi[:, 1] =                    - 24 * self.y * L**2 / K**5
+			xi[:, 2] =           96 * (self.y**2 - L**2) * L**2 / K**7
+			xi[:, 3]= 480 * self.y * (3 * L**2 - self.y**2) * L**2 / K**9		
 
-		#self.D = np.zeros((4,self.N, self.N)) +0j
-
-		#print self.D[0]
+		elif self.option['mapping'][0]=='infinite':
+			L=10
+			s_inf=20
+			s=(L/s_inf)**2
+			self.y=(-L*self.y)/(np.sqrt(1+s-self.y**2))
+					
+			xi=np.zeros((self.N,4))
+			xi[:,0]= L**2*np.sqrt(self.y**2*(s + 1)/(L**2 + self.y**2))/(self.y*(L**2 + self.y**2))		
+			xi[:,1]= -3*L**2*np.sqrt(self.y**2*(s + 1)/(L**2 + self.y**2))/(L**4 + 2*L**2*self.y**2 + self.y**4)
+			xi[:,2]= 3*L**2*np.sqrt(self.y**2*(s + 1)/(L**2 + self.y**2))*(-L**2 + 4*self.y**2)/(self.y*(L**6 + 3*L**4*self.y**2 + 3*L**2*self.y**4 + self.y**6))
+			xi[:,3]= L**2*np.sqrt(self.y**2*(s + 1)/(L**2 + self.y**2))*(45*L**2 - 60*self.y**2)/(L**8 + 4*L**6*self.y**2 + 6*L**4*self.y**4 + 4*L**2*self.y**6 + self.y**8)
+			
 		
+		elif self.option['mapping'][0]=='finite':
+			a=self.option['mapping'][1][0]
+			b=self.option['mapping'][1][1]
+			self.y=(b-a)*0.5*self.y +(a+b)*0.5
+
+			xi=np.zeros((self.N,4))
+			xi[:,0]=(2*self.y -a -b)/(b -a)
+			xi[:,1]=np.zeros(self.N)
+			xi[:,2]=np.zeros(self.N)
+			xi[:,3]=np.zeros(self.N)
+
 
 		self.D[0] = np.dot(np.diag(xi[:,0]),self.D[0])
-		self.D[1] = np.dot(np.diag(xi[:,0]**2) , self.D[1]) + np.dot(np.diag(xi[:,1]) , self.D[0])
+		self.D[1] = np.dot(np.diag(xi[:,0]**2) , self.D[1]) + np.dot(np.diag(xi[:,1]) , self.D[0])			
 		self.D[2] = np.dot(np.diag(xi[:,0]**3) , self.D[2]) + 3*np.dot(np.dot(np.diag(xi[:,0]),np.diag(xi[:,1])) ,self.D[1])   + np.dot(np.diag(xi[:,2]),self.D[0])
-
 		self.D[3] = np.dot(np.diag(xi[:,0]**4),self.D[3])  + 6*np.dot(np.dot(np.diag(xi[:,1]),np.diag(xi[:,0]**2)),self.D[2])      + 4*np.dot(np.dot(np.diag(xi[:,2]),np.diag(xi[:,0])),self.D[1]) + 3*np.dot(np.diag(xi[:,1]**2),self.D[1]) + np.dot(np.diag(xi[:,3]),self.D[0]) 
-		
+			
 		#scipy.io.savemat('test.mat', dict(x=self.D,y=xi))
 
-		#print self.D[0]
-		
-	def infinite_mapping(self):
-		L=10
-		s_inf=20
-		s=(L/s_inf)**2
-		self.y=(-L*self.y)/(np.sqrt(1+s-self.y**2))
-				
-		xi=np.zeros((self.N,4))
-		xi[:,0]= L**2*np.sqrt(self.y**2*(s + 1)/(L**2 + self.y**2))/(self.y*(L**2 + self.y**2))		
-		xi[:,1]= -3*L**2*np.sqrt(self.y**2*(s + 1)/(L**2 + self.y**2))/(L**4 + 2*L**2*self.y**2 + self.y**4)
-  		xi[:,2]= 3*L**2*np.sqrt(self.y**2*(s + 1)/(L**2 + self.y**2))*(-L**2 + 4*self.y**2)/(self.y*(L**6 + 3*L**4*self.y**2 + 3*L**2*self.y**4 + self.y**6))
-		xi[:,3]= L**2*np.sqrt(self.y**2*(s + 1)/(L**2 + self.y**2))*(45*L**2 - 60*self.y**2)/(L**8 + 4*L**6*self.y**2 + 6*L**4*self.y**4 + 4*L**2*self.y**6 + self.y**8)
-		
-		self.D[0] = np.dot(np.diag(xi[:,0]),self.D[0])
-		self.D[1] = np.dot(np.diag(xi[:,0]**2) , self.D[1]) + np.dot(np.diag(xi[:,1]) , self.D[0])
-		self.D[2] = np.dot(np.diag(xi[:,0]**3) , self.D[2]) + 3*np.dot(np.dot(np.diag(xi[:,0]),np.diag(xi[:,1])) ,self.D[1])   + np.dot(np.diag(xi[:,2]),self.D[0])
-
-		self.D[3] = np.dot(np.diag(xi[:,0]**4),self.D[3])  + 6*np.dot(np.dot(np.diag(xi[:,1]),np.diag(xi[:,0]**2)),self.D[2])      + 4*np.dot(np.dot(np.diag(xi[:,2]),np.diag(xi[:,0])),self.D[1]) + 3*np.dot(np.diag(xi[:,1]**2),self.D[1]) + np.dot(np.diag(xi[:,3]),self.D[0]) 
-		
-		#scipy.io.savemat('test.mat', dict(x=self.D,y=xi))
-
-		#print self.D[0]
 
 
 	def LNS_operator(self):
@@ -359,10 +358,10 @@ class fluid(object):
 
 		AB1=i*self.alpha*I
 
-		if self.option['equation']=='Euler':
+		if (self.option['equation']=='Euler_wave' or self.option['equation']=='Euler') :
 			AB2=i*self.alpha*np.diag(self.U)   
 			AC3=i*self.alpha*np.diag(self.U)
-		elif self.option['equation']=='Euler_CD':
+		elif (self.option['equation']=='Euler_CD' or self.option['equation']=='Euler_CD_wave'):
 			AB2=i*self.alpha*np.diag(self.U)  +np.diag(self.aCD*self.U) 
 			AC3=+ i*self.alpha*np.diag(self.U) 
 
@@ -373,7 +372,7 @@ class fluid(object):
 		elif self.option['equation']=='LNS':
 			AB2=i*self.alpha*np.diag(self.U)  -delta/self.Re 
 			AC3=i*self.alpha*np.diag(self.U)  -delta/self.Re
-		elif self.option['equation']=='LNS_CD':
+		elif self.option['equation']=='LNS_CD' :
 			AB2=i*self.alpha*np.diag(self.U)  -delta/self.Re +np.diag(self.aCD*self.U) 
 			AC3=+ i*self.alpha*np.diag(self.U)  -delta/self.Re
 		elif self.option['equation']=='LNS_turb':
@@ -406,8 +405,12 @@ class fluid(object):
 
 		if self.option['equation']=='Euler':
 			self.BC_LNS_neu_v()
+		elif self.option['equation']=='Euler_wave':
+			self.BC_LNS_wave()
 		elif self.option['equation']=='Euler_CD':
 			self.BC_LNS_neu_v()
+		elif self.option['equation']=='Euler_CD_wave':
+			self.BC_LNS_wave()
 		elif self.option['equation']=='Euler_CD_turb':
 			self.BC_LNS_neu_v()
 		elif self.option['equation']=='LNS':
@@ -441,13 +444,27 @@ class fluid(object):
 		self.A[idx_bc,:]=np.zeros(3*self.N)
 		self.B[idx_bc,:]=np.zeros(3*self.N)
 		
-		##self.A[self.N,self.N]=1
-		#self.A[2*self.N -1,2*self.N -1]=1
-		
+				
 		self.A[2*self.N ,2*self.N ]=1
 		self.A[3*self.N -1,3*self.N -1]=1
 		
 		#print self.A, self.B
+
+	def BC_LNS_wave(self):
+		idx_bc=np.array([2*self.N,3*self.N -1]) #index of the 
+		
+		self.A[idx_bc,:]=np.zeros(3*self.N)
+		self.B[idx_bc,:]=np.zeros(3*self.N)
+		
+		#v(0)=0		
+		self.A[2*self.N ,2*self.N ]=1
+		
+		#v(y_max) --> equation
+		self.A[2*self.N -1,2*self.N]= -( self.cos_alpha/self.Fr**2)
+		self.A[2*self.N,0]= (0+1j)*self.alpha*self.U[0]
+
+		self.B[2*self.N, 0]=1
+
 
 
 	def interpolate(self):
@@ -468,22 +485,24 @@ class fluid(object):
 		f_daCD=intp.interp1d(self.y_data,self.daCD_data)		
 		self.daCD=np.concatenate([(np.ones(len(self.y)-len(y_int)))*0,f_daCD(y_int)]) 
 
+	#	if self.option['equation']=='LNS_CD_wave':
+	#		self.y=self.y[	self.y<= self.['mapping'][1]]
+			
 
 
-		#plt.plot(self.aCD,self.y,'b')
-		#plt.show()
+		
 		
 
 	def plot_LNS(self):    
 		for i in np.arange(10):
-			plt.rcParams.update({'font.size': 35})
+			#plt.rcParams.update({'font.size': 32})
 			fig, ay = plt.subplots(figsize=(10,10), dpi=50)
-			lines = ay.plot(self.eigv_re,self.eigv_im,'b*',lw=5)
+			lines = ay.plot(self.eigv_re,self.eigv_im,'b*',lw=10)
 			ay.set_ylabel(r'$c_i$',fontsize=32)
 			ay.set_xlabel(r'$c_r$',fontsize=32)
 			#lgd=ay.legend((lines),(r'$U$',r'$\delta U$',r'$\delta^2 U$'),loc = 3,ncol=3, bbox_to_anchor = (0,1),fontsize=32)
-			#ay.set_ylim(self.option['plot_lim'][0])
-			#ay.set_xlim(self.option['plot_lim'][1])
+			ay.set_ylim(self.option['plot_lim'][0])
+			ay.set_xlim(self.option['plot_lim'][1])
 			ay.grid()                                         
 			#plt.tight_layout()
 			fig.savefig('RESULTS'+'spectrum_bla.png', bbox_inches='tight',dpi=50)     

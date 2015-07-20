@@ -1,14 +1,17 @@
 from pyLisa import *
 
 option={'flow':'DATA/G.txt', \
-	'n_points':200, \
+	'n_points':50, \
 	'lc':0.16739, \
 	'Ymax':1000, \
-	'perturbation':{'alpha':1.5, \
+	'perturbation':{'alpha':0.6, \
 			'Re':160}, \
 	'variables':'p_u_v', \
-	'equation':'Euler_CD', \
-	'plot_lim':[[-0.02,0.02],[0.83,0.85]]  }
+	'equation':'Euler_wave', \
+	'mapping':['finite',[0,(46.7/13.8)]], \
+	'plot_lim':[[-0.5,2],[-0.5,2]], \
+	'Froude': 0.02,\
+	'slope': 1.3e-5 }
 
 
 f=fluid(option)
@@ -24,11 +27,14 @@ f.interpolate()
 #f.set_poiseuille()
 
 f.choose_variables()
+
 f.solve_eig()
-f.plot_spectrum()
 f.plot_velocity()
+f.plot_spectrum()
 
 #f.omega_alpha_curves(0.0001,2,50)
+
+#print f.y, f.U
 
 """
 option={'flow':'hyp', \
