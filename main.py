@@ -1,12 +1,12 @@
 from pyLisa import *
 
 option={'flow':'DATA/G.txt', \
-	'n_points':50, \
+	'n_points':200, \
 	'lc':0.16739, \
 	'Ymax':1000, \
 	'perturbation':{'alpha':0.6, \
 			'Re':160}, \
-	'variables':'p_u_v', \
+	'variables':'v_eta', \
 	'equation':'Euler_wave', \
 	'mapping':['finite',[0,(46.7/13.8)]], \
 	'plot_lim':[[-0.5,2],[-0.5,2]], \

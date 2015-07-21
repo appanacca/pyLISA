@@ -41,7 +41,7 @@ class fluid(object):
 		self.Re=option['perturbation']['Re']
 
 		self.Fr=option['Froude']
-		self.cos_alpha=option['slope']
+		self.slope=option['slope']
 
 
 	def read_velocity_profile(self):
@@ -124,6 +124,7 @@ class fluid(object):
 		I=np.identity(self.N)
 		i=(0+1j)
 		delta=self.D[1] -self.alpha**2 *I
+		Z=np.zeros((self.N,self.N))
 
 
 		CD=np.matrix(np.diag(self.aCD))
@@ -155,8 +156,19 @@ class fluid(object):
 			print "not implemented yet"			
 		elif self.option['equation']=='LNS_turb_CD':
 			print "not implemented yet"
+		elif self.option['equation']=='Euler_wave':        # in this case the B.C. is of 2nd order in omega so the matrix problem should be reorganized
+								# see the article of Jerome Hoepffner for details in the trick to transform polynomial eigenvalue problem in a single one
+			self.A= np.dot(np.diag(self.U),delta) -np.diag(self.ddU) 
+			self.B=delta
+			self.C=Z
 
+			A1=np.concatenate((self.A,Z),axis=1)
+			A2=np.concatenate((Z,I),axis=1)
+			self.A=np.concatenate((A1,A2))
 
+			B1=np.concatenate((self.B,self.C),axis=1)
+			B2=np.concatenate((I,Z),axis=1)
+			self.B=np.concatenate((B1,B2))
 
 
 		if self.option['equation']=='Euler':
@@ -173,7 +185,8 @@ class fluid(object):
 			print "not implemented yet"			
 		elif self.option['equation']=='LNS_turb_CD':
 			print "not implemented yet"
-		
+		elif self.option['equation']=='Euler_wave':
+			self.BC_wave_v_eta()
 
 
 
@@ -201,6 +214,28 @@ class fluid(object):
 		self.A[-1,:]=np.zeros(self.N)
 		self.A[-1,-1]=1
 		self.B[-1,:]=self.A[-1,:]*eps
+
+	def BC_wave_v_eta(self):
+		eps=1e-4*(0+1j)
+		
+		#v(y_max)
+		self.A[0,:]=np.zeros(2*self.N)
+		self.A[1,:]=np.zeros(2*self.N)
+		self.A[0,0]=-np.cos(self.slope)/self.Fr**2
+		self.A[1,0]=self.U[0]
+		
+		self.B[0,:]=np.zeros(2*self.N)
+		self.B[1,:]=np.zeros(2*self.N)
+		self.B[1,self.N]=1 
+		
+
+		#v(0)=0
+		self.A[self.N -1,:]=np.zeros(2*self.N)
+		self.A[self.N -1,self.N -1]=1
+		self.B[self.N -1,:]=self.A[self.N -1,:]*eps
+
+
+
 
 	def BC2(self):
 		"""impose the boundary condition as specified in the paper "Modal Stability Theory" ASME 2014 from Hanifi in his examples codes
@@ -270,7 +305,8 @@ class fluid(object):
 		
 			print omega_picked, lin.norm(eigfun_picked)
 
-			v=eigfun_picked
+	  # needed in the case "Euler_wave" because only the half of the point are in fact v the other part of the vector is alpha*v
+			v=eigfun_picked[0:self.N]  
 			u=np.dot((v/self.alpha),  self.D[0]) *(0+1j)
 
 			fig2, (ay2,ay3) = plt.subplots(1,2)#, dpi=50)
@@ -457,10 +493,10 @@ class fluid(object):
 		self.B[idx_bc,:]=np.zeros(3*self.N)
 		
 		#v(0)=0		
-		self.A[2*self.N ,2*self.N ]=1
+		self.A[3*self.N -1,3*self.N -1]=1
 		
 		#v(y_max) --> equation
-		self.A[2*self.N -1,2*self.N]= -( self.cos_alpha/self.Fr**2)
+		self.A[2*self.N ,2*self.N]= -( self.slope/self.Fr**2)
 		self.A[2*self.N,0]= (0+1j)*self.alpha*self.U[0]
 
 		self.B[2*self.N, 0]=1
