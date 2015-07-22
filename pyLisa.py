@@ -219,14 +219,13 @@ class fluid(object):
 		eps=1e-4*(0+1j)
 		
 		#v(y_max)
-		self.A[0,:]=np.zeros(2*self.N)
-		self.A[1,:]=np.zeros(2*self.N)
-		self.A[0,0]=-np.cos(self.slope)/self.Fr**2
-		self.A[1,0]=self.U[0]
+		#self.A[0,:]=self.D[0][0,:]
+		self.A[0,0:self.N]=self.D[0][0,:]*self.U[0]**2 -(np.identity(self.N)[0,:])*np.cos(self.slope)/self.Fr**2
 		
-		self.B[0,:]=np.zeros(2*self.N)
-		self.B[1,:]=np.zeros(2*self.N)
-		self.B[1,self.N]=1 
+		
+		self.B[0,:]= np.concatenate((2*self.U[0]*self.D[0][0,:],-self.D[0][0,:]),axis=1)
+		#self.B[0,0]=+2*self.U[0]*self.D[0][0,0]
+		#self.B[1,self.N]=-self.D[0][0,0]  #conditoon on C**2 
 		
 
 		#v(0)=0
@@ -384,6 +383,12 @@ class fluid(object):
 
 
 	def LNS_operator(self):
+		#----Matrix Construction-----------
+		#  p |u |v
+		# (       ) continuity 
+		# (       ) x-momentum
+		# (       ) y-momentum
+		
 		I=np.identity(self.N)
 		i=(0+1j)
 		delta=self.D[1] -self.alpha**2 *I
@@ -496,11 +501,9 @@ class fluid(object):
 		self.A[3*self.N -1,3*self.N -1]=1
 		
 		#v(y_max) --> equation
-		self.A[2*self.N ,2*self.N]= -( self.slope/self.Fr**2)
+		self.A[2*self.N ,2*self.N]= -( np.cos(self.slope)/self.Fr**2)
 		self.A[2*self.N,0]= (0+1j)*self.alpha*self.U[0]
-
-		self.B[2*self.N, 0]=1
-
+		self.B[2*self.N, 0]=(0+1j)*self.alpha
 
 
 	def interpolate(self):
