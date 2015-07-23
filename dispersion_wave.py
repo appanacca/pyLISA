@@ -15,7 +15,7 @@ M14=(U1*alpha -omega)*(sm.exp(alpha*y1) +sm.exp(-alpha*y1)) #G
 
 M12=-((U1*alpha -omega)*(sm.exp(alpha*y1)) -m*sm.exp(alpha*y1)) #B
 
-M13=-((U1*alpha -omega)*(-sm.exp(-alpha*y1)) -m*sm.exp(-alpha*y1)) #C
+M13=((U1*alpha -omega)*(sm.exp(-alpha*y1)) +m*sm.exp(-alpha*y1)) #C
 
 M11=0  #A
 
@@ -40,7 +40,7 @@ M31=(U2*alpha -omega)*sm.exp(alpha*y2)  #A
 
 M32=-((U2*alpha -omega)*(sm.exp(alpha*y2)) -m*(sm.exp(alpha*y2)))  #B
 
-M33= -((U2*alpha -omega)*(-sm.exp(-alpha*y2)) -m*(sm.exp(-alpha*y2)))  #C
+M33= ((U2*alpha -omega)*(sm.exp(-alpha*y2)) +m*(sm.exp(-alpha*y2)))  #C
 
 M34=0 #G
 
@@ -62,7 +62,7 @@ M44=0  #G
 
 # equations in y_max:
 
-M51=(sm.exp(alpha*ym))*((1/alpha)*(U2*alpha -omega)**2 -slope/Fr**2 )  #A
+M51=(sm.exp(alpha*ym))*((U2*alpha -omega)**2 -slope/Fr**2 )  #A
 
 M52=0   #B
 
@@ -70,7 +70,7 @@ M53= 0 #C
 
 M54= 0 #G
 
-M55=-(sm.exp(-alpha*ym))*((1/alpha)*(U2*alpha -omega)**2 +slope/Fr**2 )   #F
+M55=-(sm.exp(-alpha*ym))*((U2*alpha -omega)**2 +slope/Fr**2 )   #F
 
 #------- MATRIX SYSTEM BUILDING----------
 
