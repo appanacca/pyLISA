@@ -32,16 +32,24 @@ class fluid(object):
     def __init__(self, option, **kwargs):
         self.option = option
         self.N = option['n_points']
-        self.y = np.linspace(-1, 1, self.option['n_points'])
-        self.U = np.zeros(len(self.y))
-        self.aCD = np.zeros(len(self.y))
-        self.dU = np.zeros(len(self.y))
-        self.ddU = np.zeros(len(self.y))
+        # self.y = np.linspace(-1, 1, self.N)
+        self.U = np.zeros(self.N)
+        self.aCD = np.zeros(self.N)
+        self.dU = np.zeros(self.N)
+        self.ddU = np.zeros(self.N)
         self.alpha = option['perturbation']['alpha']
         self.Re = option['perturbation']['Re']
 
         self.Fr = option['Froude']
         self.slope = option['slope']
+
+    def diff_matrix(self):
+        """build the differenziation matrix with chebichev discretization
+        [algoritmh from Reddy & W...]"""
+        # in this line we re-instanciate the y in gauss lobatto points
+        self.y, self.D = cb.chebdif(self.N, 4)
+        self.D = self.D + 0j
+        # summing 0j is needed in order to make the D matrices immaginary
 
     def read_velocity_profile(self):
         """ read from a file the velocity profile store in a
@@ -63,6 +71,8 @@ class fluid(object):
         self.U = Upoiseuille(self.y)
         self.dU = dUpoiseuille(self.y)
         self.ddU = ddUpoiseuille
+        self.aCD = np.zeros(self.N)
+        self.daCD = np.zeros(self.N)
 
     def set_hyptan(self):
         """set the members velocity and its derivatives as hyperbolic tangent
@@ -74,12 +84,14 @@ class fluid(object):
         self.dU = dUhyptan(self.y)
         self.ddU = ddUhyptan(self.y)
         self.aCD = np.zeros(self.N)
+        self.daCD = np.zeros(self.N)
 
     def set_blasisus(self, y_gl):
         """set the members velocity and its derivatives as boundary layer
         flow"""
         self.U, self.dU, self.ddU = bl.blasius(y_gl)
-        self.CD = np.zeros(len(self.y))
+        self.aCD = np.zeros(len(self.y))
+        self.daCD = np.zeros(self.N)
 
     def choose_variables(self):
         """ read the 'variable' option in the option
@@ -90,6 +102,73 @@ class fluid(object):
         elif self.option['variables'] == 'p_u_v':
             self.LNS_operator()
 
+    def mapping(self):
+        if self.option['mapping'][0] == 'semi_infinite':
+            ymax = self.option['Ymax']
+            s = self.y[1:-1]
+            r = (s + 1)/2
+            L = (ymax*np.sqrt(1-r[0]**2))/(2*r[0])
+            self.y = (L*(s+1))/(np.sqrt((1 - ((s+1)**2)/4)))
+            y_inf = 2*self.y_inf[0]  # 2000
+            self.y = np.concatenate([np.array([y_inf]), self.y])
+            self.y = np.concatenate([self.y, np.array([0])])
+            K = np.sqrt(self.y**2 + 4 * L**2)
+
+            xi = np.zeros((self.N, 4))
+            xi[:, 0] = 8 * L**2 / K**3
+            xi[:, 1] = - 24 * self.y * L**2 / K**5
+            xi[:, 2] = 96 * (self.y**2 - L**2) * L**2 / K**7
+            xi[:, 3] = 480 * self.y * (3 * L**2 - self.y**2) * L**2 / K**9
+
+        elif self.option['mapping'][0] == 'infinite':
+            L = 10
+            s_inf = 20
+            s = (L/s_inf)**2
+            self.y = (-L*self.y)/(np.sqrt(1+s-self.y**2))
+
+            xi = np.zeros((self.N, 4))
+            xi[:, 0] = (L**2 * np.sqrt(self.y**2 * (s + 1) /
+                                       (L**2 + self.y**2)) /
+                        (self.y*(L**2 + self.y**2)))
+            xi[:, 1] = (-3*L**2*np.sqrt(self.y**2*(s + 1)/(L**2 + self.y**2)) /
+                        (L**4 + 2*L**2*self.y**2 + self.y**4))
+            xi[:, 2] = (3*L**2*np.sqrt(self.y**2*(s + 1)/(L**2 +
+                        self.y**2))*(-L**2 + 4*self.y**2) /
+                        (self.y*(L**6 + 3*L**4*self.y**2 +
+                         3*L**2*self.y**4 + self.y**6)))
+            xi[:, 3] = (L**2*np.sqrt(self.y**2*(s + 1)/(L**2 +
+                        self.y**2))*(45*L**2 - 60*self.y**2) /
+                        (L**8 + 4*L**6*self.y**2 + 6*L**4*self.y**4 +
+                            4*L**2*self.y**6 + self.y**8))
+
+        elif self.option['mapping'][0] == 'finite':
+            a = self.option['mapping'][1][0]
+            b = self.option['mapping'][1][1]
+            self.y = (b - a) * 0.5 * self.y + (a + b) * 0.5
+
+            xi = np.zeros((self.N, 4))
+            xi[:, 0] = (2 * self.y - a - b) / (b - a)
+            xi[:, 1] = np.zeros(self.N)
+            xi[:, 2] = np.zeros(self.N)
+            xi[:, 3] = np.zeros(self.N)
+
+        self.D[0] = np.dot(np.diag(xi[:, 0]), self.D[0])
+        self.D[1] = (np.dot(np.diag(xi[:, 0]**2), self.D[1]) +
+                     np.dot(np.diag(xi[:, 1]), self.D[0]))
+        self.D[2] = (np.dot(np.diag(xi[:, 0]**3), self.D[2]) +
+                     3*np.dot(np.dot(np.diag(xi[:, 0]), np.diag(xi[:, 1])),
+                              self.D[1]) +
+                     np.dot(np.diag(xi[:, 2]), self.D[0]))
+        self.D[3] = (np.dot(np.diag(xi[:, 0]**4), self.D[3]) +
+                     6*np.dot(np.dot(np.diag(xi[:, 1]), np.diag(xi[:, 0]**2)),
+                              self.D[2]) +
+                     4 * np.dot(np.dot(np.diag(xi[:, 2]), np.diag(xi[:, 0])),
+                                self.D[1]) +
+                     3 * np.dot(np.diag(xi[:, 1]**2), self.D[1]) +
+                     np.dot(np.diag(xi[:, 3]), self.D[0]))
+
+        # scipy.io.savemat('test.mat', dict(x = self.D,y = xi))
+
     def plot_velocity(self):
         """plot the velocity profiles"""
         fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
@@ -98,8 +177,9 @@ class fluid(object):
                         self.daCD, self.y, 'c', lw=2)
         ay.set_ylabel(r'$y$', fontsize=32)
         lgd = ay.legend((lines),
-                        (r'$U$', r'$\delta U$',
-                         r'$\delta^2 U$', r'$a^* \dot C_D$'),
+                        (r'$U$', r'$\partial U$',
+                         r'$\partial^2 U$', r'$a^* C_D$',
+                         r'$\partial a^* C_D$'),
                         loc=3, ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
         # ay.set_ylim([0,5])
         # ax.set_xlim([np.min(time[2*T:3*T]),np.max(time[2*T:3*T])])
@@ -107,18 +187,7 @@ class fluid(object):
         # plt.tight_layout()
         # fig.savefig('RESULTS'+'couette.png', bbox_extra_artists=(lgd, ),
         #              bbox_inches='tight', dpi=50)
-        plt.show(lines)
-
-    def diff_matrix(self):
-        """build the differenziation matrix with chebichev discretization
-        [algoritmh from Reddy & W...]"""
-        # in this line we re-instanciate the y in gauss lobatto points
-        self.y, self.D = cb.chebdif(self.N, 4)
-        self.D = self.D + 0j
-        # summing 0j is needed in order to make the D matrices immaginary
-
-        # def mapping(self,method):
-        # più tardi implementa metodi diversi per fare il mapping
+        plt.show()
 
     def v_eta_operator(self):
         """ this member build the stability operator in the variable v, so
@@ -335,73 +404,6 @@ class fluid(object):
             ay3.grid()
 
             plt.show(lines)
-
-    def mapping(self):
-        if self.option['mapping'][0] == 'semi_infinite':
-            ymax = self.option['Ymax']
-            s = self.y[1:-1]
-            r = (s + 1)/2
-            L = (ymax*np.sqrt(1-r[0]**2))/(2*r[0])
-            self.y = (L*(s+1))/(np.sqrt((1 - ((s+1)**2)/4)))
-            y_inf = 2*self.y_inf[0]  # 2000
-            self.y = np.concatenate([np.array([y_inf]), self.y])
-            self.y = np.concatenate([self.y, np.array([0])])
-            K = np.sqrt(self.y**2 + 4 * L**2)
-
-            xi = np.zeros((self.N, 4))
-            xi[:, 0] = 8 * L**2 / K**3
-            xi[:, 1] = - 24 * self.y * L**2 / K**5
-            xi[:, 2] = 96 * (self.y**2 - L**2) * L**2 / K**7
-            xi[:, 3] = 480 * self.y * (3 * L**2 - self.y**2) * L**2 / K**9
-
-        elif self.option['mapping'][0] == 'infinite':
-            L = 10
-            s_inf = 20
-            s = (L/s_inf)**2
-            self.y = (-L*self.y)/(np.sqrt(1+s-self.y**2))
-
-            xi = np.zeros((self.N, 4))
-            xi[:, 0] = (L**2 * np.sqrt(self.y**2 * (s + 1) /
-                                       (L**2 + self.y**2)) /
-                        (self.y*(L**2 + self.y**2)))
-            xi[:, 1] = (-3*L**2*np.sqrt(self.y**2*(s + 1)/(L**2 + self.y**2)) /
-                        (L**4 + 2*L**2*self.y**2 + self.y**4))
-            xi[:, 2] = (3*L**2*np.sqrt(self.y**2*(s + 1)/(L**2 +
-                        self.y**2))*(-L**2 + 4*self.y**2) /
-                        (self.y*(L**6 + 3*L**4*self.y**2 +
-                         3*L**2*self.y**4 + self.y**6)))
-            xi[:, 3] = (L**2*np.sqrt(self.y**2*(s + 1)/(L**2 +
-                        self.y**2))*(45*L**2 - 60*self.y**2) /
-                        (L**8 + 4*L**6*self.y**2 + 6*L**4*self.y**4 +
-                            4*L**2*self.y**6 + self.y**8))
-
-        elif self.option['mapping'][0] == 'finite':
-            a = self.option['mapping'][1][0]
-            b = self.option['mapping'][1][1]
-            self.y = (b - a) * 0.5 * self.y + (a + b) * 0.5
-
-            xi = np.zeros((self.N, 4))
-            xi[:, 0] = (2 * self.y - a - b) / (b - a)
-            xi[:, 1] = np.zeros(self.N)
-            xi[:, 2] = np.zeros(self.N)
-            xi[:, 3] = np.zeros(self.N)
-
-        self.D[0] = np.dot(np.diag(xi[:, 0]), self.D[0])
-        self.D[1] = (np.dot(np.diag(xi[:, 0]**2), self.D[1]) +
-                     np.dot(np.diag(xi[:, 1]), self.D[0]))
-        self.D[2] = (np.dot(np.diag(xi[:, 0]**3), self.D[2]) +
-                     3*np.dot(np.dot(np.diag(xi[:, 0]), np.diag(xi[:, 1])),
-                              self.D[1]) +
-                     np.dot(np.diag(xi[:, 2]), self.D[0]))
-        self.D[3] = (np.dot(np.diag(xi[:, 0]**4), self.D[3]) +
-                     6*np.dot(np.dot(np.diag(xi[:, 1]), np.diag(xi[:, 0]**2)),
-                              self.D[2]) +
-                     4 * np.dot(np.dot(np.diag(xi[:, 2]), np.diag(xi[:, 0])),
-                                self.D[1]) +
-                     3 * np.dot(np.diag(xi[:, 1]**2), self.D[1]) +
-                     np.dot(np.diag(xi[:, 3]), self.D[0]))
-
-        # scipy.io.savemat('test.mat', dict(x = self.D,y = xi))
 
     def LNS_operator(self):
         # ----Matrix Construction-----------
@@ -695,3 +697,8 @@ class fluid(object):
 
             p.circle(sp_re, sp_im, size=10, fill_color=COLORS[j])
         bkpl.show(p)
+
+    def save_sim(self, file_name):
+        np.savez(file_name, sim_param=self.option, U=self.U, dU=self.dU,
+                 ddU=self.ddU, aCD=self.aCD, daCD=self.daCD,
+                 eigv=self.eigv, eigf=self.eigf)

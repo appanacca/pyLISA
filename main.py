@@ -32,6 +32,8 @@ f.solve_eig()
 f.plot_velocity()
 f.plot_spectrum()
 
+f.save_sim()
+
 # f.omega_alpha_curves(0.0001,2,50)
 
 # print f.y, f.U
