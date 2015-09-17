@@ -1,4 +1,4 @@
-from pyLisa import *
+import sapy.modal as sa
 
 option = {'flow': 'DATA/G.txt',
           'n_points': 200,
@@ -14,7 +14,7 @@ option = {'flow': 'DATA/G.txt',
           'slope': 1.3e-5}
 
 
-f = fluid(option)
+f = sa.fluid(option)
 
 f.diff_matrix()
 f.read_velocity_profile()
