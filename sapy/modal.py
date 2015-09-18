@@ -37,8 +37,8 @@ class fluid(object):
         self.aCD = np.zeros(self.N)
         self.dU = np.zeros(self.N)
         self.ddU = np.zeros(self.N)
-        self.alpha = option['perturbation']['alpha']
-        self.Re = option['perturbation']['Re']
+        self.alpha = option['alpha']
+        self.Re = option['Re']
 
         self.Fr = option['Froude']
         self.slope = option['slope']
@@ -167,27 +167,7 @@ class fluid(object):
                      3 * np.dot(np.diag(xi[:, 1]**2), self.D[1]) +
                      np.dot(np.diag(xi[:, 3]), self.D[0]))
 
-        # scipy.io.savemat('test.mat', dict(x = self.D,y = xi))
-
-    def plot_velocity(self):
-        """plot the velocity profiles"""
-        fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
-        lines = ay.plot(self.U, self.y, 'b', self.dU, self.y, 'g',
-                        self.ddU, self.y, 'r', self.aCD, self.y, 'm',
-                        self.daCD, self.y, 'c', lw=2)
-        ay.set_ylabel(r'$y$', fontsize=32)
-        lgd = ay.legend((lines),
-                        (r'$U$', r'$\partial U$',
-                         r'$\partial^2 U$', r'$a^* C_D$',
-                         r'$\partial a^* C_D$'),
-                        loc=3, ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
-        # ay.set_ylim([0,5])
-        # ax.set_xlim([np.min(time[2*T:3*T]),np.max(time[2*T:3*T])])
-        ay.grid()
-        # plt.tight_layout()
-        # fig.savefig('RESULTS'+'couette.png', bbox_extra_artists=(lgd, ),
-        #              bbox_inches='tight', dpi=50)
-        plt.show()
+        # scipy.io.savemat('test.mat', dict(x = self.D,y = xi)
 
     def v_eta_operator(self):
         """ this member build the stability operator in the variable v, so
@@ -337,73 +317,6 @@ class fluid(object):
         selector = np.isfinite(self.eigv)
         self.eigv = self.eigv[selector]
         self.eigf = self.eigf[:, selector]
-
-        self.eigv_re = np.real(self.eigv)
-        self.eigv_im = np.imag(self.eigv)
-
-    def plot_spectrum(self):
-        if self.option['variables'] == 'v_eta':
-            self.plot_spectrum_v_eta()
-        elif self.option['variables'] == 'p_u_v':
-            self.plot_LNS()
-
-    def plot_spectrum_v_eta(self):
-        """ plot the spectrum """
-        for i in np.arange(10):
-            fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
-            lines = ay.plot(self.eigv_re, self.eigv_im, 'b*', lw=10)
-            ay.set_ylabel(r'$c_i$', fontsize=32)
-            ay.set_xlabel(r'$c_r$', fontsize=32)
-            # lgd = ay.legend((lines),(r'$U$',r'$\delta U$',r'$\delta^2 U$'),
-            #                          loc=3, ncol=3, bbox_to_anchor=(0,1),
-            #                          fontsize = 32)
-            ay.set_xlim([0.4, 1.6])
-            ay.set_ylim([-0.02, 0.28])
-            ay.grid()
-            # plt.tight_layout()
-            fig.savefig('RESULTS'+'spectrum_couette.png',
-                        bbox_inches='tight', dpi=50)
-            # plt.show(lines)
-
-            sel_eig = plt.ginput(2)
-
-            omega_r_picked = (sel_eig[0][0] + sel_eig[1][0])/2
-            omega_i_picked = (sel_eig[0][1] + sel_eig[1][1])/2
-
-            omega_picked = omega_r_picked*(1+0j) + omega_i_picked*(0+1j)
-            n = np.argmin(np.abs(self.eigv - omega_picked))
-
-            eigfun_picked = self.eigf[:, n]  # *(-0.13 -0.99j
-            print omega_picked, lin.norm(eigfun_picked)
-
-            # needed in the case "Euler_wave" because only the half of the
-            # point are in fact v the other part of the vector is alpha*v
-            v = eigfun_picked[0:self.N]
-            u = np.dot((v/self.alpha), self.D[0]) * (0+1j)
-
-            fig2, (ay2, ay3) = plt.subplots(1, 2)  # , dpi=50)
-            lines2 = ay2.plot(np.real(u), self.y, 'r',
-                              np.imag(u), self.y, 'g',
-                              np.sqrt(u*np.conjugate(u)), self.y, 'm', lw=2)
-            ay2.set_ylabel(r'$y$', fontsize=32)
-            ay2.set_xlabel(r"$u$", fontsize=32)
-            # lgd = ay2.legend((lines2),(r'$Re$',r'$Im$',r'$Mod$'),
-            #               loc=3, ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
-            ay2.set_ylim([0, 5])
-            # ay2.set_xlim([-1, 1])
-            ay2.grid()
-
-            lines3 = ay3.plot(np.real(v), self.y, 'r', np.imag(v), self.y, 'g',
-                              np.sqrt(v*np.conjugate(v)), self.y, 'm', lw=2)
-            ay3.set_ylabel(r'$y$', fontsize=32)
-            ay3.set_xlabel(r"$v$", fontsize=32)
-            # lgd = ay3.legend((lines3),(r'$Re$',r'$Im$',r'$Mod$'), loc=3,
-            #                  ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
-            ay3.set_ylim([0, 5])
-            # ay3.set_xlim([-1, 1])
-            ay3.grid()
-
-            plt.show(lines)
 
     def LNS_operator(self):
         # ----Matrix Construction-----------
@@ -561,75 +474,6 @@ class fluid(object):
         self.daCD = np.concatenate([(np.ones(len(self.y) - len(y_int))) * 0,
                                    f_daCD(y_int)])
 
-    def plot_LNS(self):
-        for i in np.arange(10):
-            # plt.rcParams.update({'font.size': 32})
-            fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
-            lines = ay.plot(self.eigv_re, self.eigv_im, 'b*', lw=10)
-            ay.set_ylabel(r'$c_i$', fontsize=32)
-            ay.set_xlabel(r'$c_r$', fontsize=32)
-            # lgd = ay.legend((lines), (r'$U$',r'$\delta U$',
-            #                           r'$\delta^2 U$'),loc=3, ncol=3,
-            #                 bbox_to_anchor=(0, 1), fontsize=32)
-            ay.set_ylim(self.option['plot_lim'][0])
-            ay.set_xlim(self.option['plot_lim'][1])
-            ay.grid()
-            # plt.tight_layout()
-            fig.savefig('RESULTS'+'spectrum_bla.png', bbox_inches='tight',
-                        dpi=50)
-            # plt.show(lines)
-
-            sel_eig = plt.ginput(2)
-
-            omega_r_picked = (sel_eig[0][0] + sel_eig[1][0])/2
-            omega_i_picked = (sel_eig[0][1] + sel_eig[1][1])/2
-
-            omega_picked = omega_r_picked*(1+0j) + omega_i_picked*(0+1j)
-            n = np.argmin(np.abs(self.eigv - omega_picked))
-
-            eigfun_picked = self.eigf[:, n]
-
-            print omega_picked
-
-            p = eigfun_picked[0:self.N]
-            u = eigfun_picked[self.N:2*self.N]
-            v = eigfun_picked[2*self.N:3*self.N]
-
-            fig2, (ay1, ay2, ay3) = plt.subplots(1, 3)  # , dpi = 50)
-            lines1 = ay1.plot(np.real(p), self.y, 'r', np.imag(p), self.y, 'g',
-                              np.sqrt(p*np.conjugate(p)), self.y, 'm', lw=2)
-            ay1.set_ylabel(r'$y$', fontsize=32)
-            ay1.set_xlabel(r"$p$", fontsize=32)
-            lgd = ay1.legend((lines1), (r'$Re$', r'$Im$', r'$Mod$'), loc=3,
-                             ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
-            ay1.set_ylim([0, 5])
-            # ay1.set_xlim([-1, 1])
-            ay1.grid()
-
-            lines2 = ay2.plot(np.real(u), self.y, 'r', np.imag(u), self.y, 'g',
-                              np.sqrt(u*np.conjugate(u)), self.y, 'm', lw=2)
-            ay2.set_ylabel(r'$y$', fontsize=32)
-            ay2.set_xlabel(r"$u$", fontsize=32)
-            # lgd = ay2.legend((lines2), (r'$Re$', r'$Im$', r'$Mod$'), loc=3,
-            #                  ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
-            ay2.set_ylim([0, 5])
-            # ay2.set_xlim([-1, 1])
-            ay2.grid()
-
-            lines3 = ay3.plot(np.real(v), self.y, 'r', np.imag(v), self.y, 'g',
-                              np.sqrt(v*np.conjugate(v)), self.y, 'm', lw=2)
-            ay3.set_ylabel(r'$y$', fontsize=32)
-            ay3.set_xlabel(r"$v$", fontsize=32)
-            # lgd = ay3.legend((lines3), (r'$Re$', r'$Im$', r'$Mod$'), loc=3,
-            #                  ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
-            ay3.set_ylim([0, 5])
-            # ay3.set_xlim([-1, 1])
-            ay3.grid()
-
-            fig2.savefig('fun.png', bbox_inches='tight', dpi=150)
-
-            plt.show(lines)
-
     @nb.jit
     def omega_alpha_curves(self, alpha_start, alpha_end, n_step):
         self.vec_alpha = np.linspace(alpha_start, alpha_end, n_step)
@@ -699,6 +543,8 @@ class fluid(object):
         bkpl.show(p)
 
     def save_sim(self, file_name):
-        np.savez(file_name, sim_param=self.option, U=self.U, dU=self.dU,
+        np.savez(file_name, sim_param_keys=np.array(self.option.keys()),
+                 sim_param_values=np.array(self.option.values(), dtype=object),
+                 U=self.U, dU=self.dU, y=self.y,
                  ddU=self.ddU, aCD=self.aCD, daCD=self.daCD,
-                 eigv=self.eigv, eigf=self.eigf)
+                 eigv=self.eigv, eigf=self.eigf, D=self.D[0])

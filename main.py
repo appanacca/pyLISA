@@ -1,18 +1,18 @@
 import sapy.modal as sa
+import sapy.post as po
 
 option = {'flow': 'DATA/G.txt',
           'n_points': 200,
           'lc': 0.16739,
           'Ymax': 1000,
-          'perturbation': {'alpha': 0.6,
-                           'Re': 160},
+          'alpha': 0.6,
+          'Re': 160,
           'variables': 'v_eta',
           'equation': 'Euler_wave',
           'mapping': ['finite', [0, (46.7/13.8)]],
-          'plot_lim': [[-0.5, 2], [-0.5, 2]],
           'Froude': 0.02,
           'slope': 1.3e-5}
-
+'''
 
 f = sa.fluid(option)
 
@@ -29,11 +29,15 @@ f.interpolate()
 f.choose_variables()
 
 f.solve_eig()
-f.plot_velocity()
-f.plot_spectrum()
+# f.plot_velocity()
+# f.plot_spectrum()
 
-f.save_sim()
+f.save_sim('prova')
+'''
 
+v = po.viz('prova.npz')
+v.plot_velocity()
+v.plot_spectrum()
 # f.omega_alpha_curves(0.0001,2,50)
 
 # print f.y, f.U
