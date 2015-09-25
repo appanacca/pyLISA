@@ -1,18 +1,20 @@
 import sapy.modal as sa
 import sapy.post as po
+import sapy.sensitivity as sn
 
 option = {'flow': 'DATA/G.txt',
           'n_points': 200,
           'lc': 0.16739,
           'Ymax': 1000,
+          'yi': 4,
           'alpha': 0.6,
           'Re': 160,
           'variables': 'v_eta',
-          'equation': 'Euler_wave',
-          'mapping': ['finite', [0, (46.7/13.8)]],
+          'equation': 'Euler_CD',
+          'mapping': ['semi_infinite_PB', [0, (46.7/13.8)]],
           'Froude': 0.02,
           'slope': 1.3e-5}
-'''
+
 
 f = sa.fluid(option)
 
@@ -26,14 +28,14 @@ f.interpolate()
 # f.set_hyptan()
 # f.set_poiseuille()
 
-f.choose_variables()
+f.set_operator_variables()
 
 f.solve_eig()
-# f.plot_velocity()
-# f.plot_spectrum()
+f.adjoint_spectrum_v_eta()
+f.solve_eig_adj()
 
 f.save_sim('prova')
-'''
+
 
 v = po.viz('prova.npz')
 v.plot_velocity()
@@ -41,6 +43,9 @@ v.plot_spectrum()
 # f.omega_alpha_curves(0.0001,2,50)
 
 # print f.y, f.U
+
+# om = sn.sensitivity(10, 'prova.npz', 5)
+# om.norm()
 
 """
 option = {'flow':'hyp',

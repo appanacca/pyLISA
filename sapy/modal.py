@@ -23,6 +23,8 @@ import numba as nb
 import bokeh.plotting as bkpl
 import bokeh.models as bkmd
 
+import pdb as pdb
+
 
 class fluid(object):
     """
@@ -93,7 +95,7 @@ class fluid(object):
         self.aCD = np.zeros(len(self.y))
         self.daCD = np.zeros(self.N)
 
-    def choose_variables(self):
+    def set_operator_variables(self):
         """ read the 'variable' option in the option
         dictionary and select the operator to solve"""
 
@@ -103,13 +105,13 @@ class fluid(object):
             self.LNS_operator()
 
     def mapping(self):
-        if self.option['mapping'][0] == 'semi_infinite':
+        if self.option['mapping'][0] == 'semi_infinite_PB':
             ymax = self.option['Ymax']
             s = self.y[1:-1]
             r = (s + 1)/2
             L = (ymax*np.sqrt(1-r[0]**2))/(2*r[0])
             self.y = (L*(s+1))/(np.sqrt((1 - ((s+1)**2)/4)))
-            y_inf = 2*self.y_inf[0]  # 2000
+            y_inf = 2*self.y[0]  # 2000
             self.y = np.concatenate([np.array([y_inf]), self.y])
             self.y = np.concatenate([self.y, np.array([0])])
             K = np.sqrt(self.y**2 + 4 * L**2)
@@ -119,6 +121,19 @@ class fluid(object):
             xi[:, 1] = - 24 * self.y * L**2 / K**5
             xi[:, 2] = 96 * (self.y**2 - L**2) * L**2 / K**7
             xi[:, 3] = 480 * self.y * (3 * L**2 - self.y**2) * L**2 / K**9
+
+        elif self.option['mapping'][0] == 'semi_infinite_SH':
+            ymax = self.option['Ymax']
+            yi = self.option['yi']
+            a = (yi*ymax)/(ymax - 2*yi)
+            b = 1 + 2*a/ymax
+            self.y = a*(1 + self.y)/(b - self.y)
+
+            xi = np.zeros((self.N, 4))
+            xi[:, 0] = a*(b + 1)/(b - self.y)**2
+            xi[:, 1] = 2*a*(b + 1)/(b - self.y)**3
+            xi[:, 2] = 6*a*(b + 1)/(b - self.y)**4
+            xi[:, 3] = 24*a*(b + 1)/(b - self.y)**5
 
         elif self.option['mapping'][0] == 'infinite':
             L = 10
@@ -189,10 +204,10 @@ class fluid(object):
         ddU = np.matrix(np.diag(self.ddU))
 
         if self.option['equation'] == 'Euler':
-            self.A = np.dot(np.diag(self.U), delta) - np.diag(self.ddU)
+            self.A = U * delta - np.diag(self.ddU)
             self.B = delta
         elif self.option['equation'] == 'Euler_CD':
-            self.A = np.dot(np.diag(self.U), delta) - np.diag(self.ddU)\
+            self.A = U * delta - np.diag(self.ddU)\
                     - (i/self.alpha) * (dCD*U*D1 + CD*dU*D1 + CD*U*D2)
             self.B = delta
         elif self.option['equation'] == 'Euler_CD_turb':
@@ -314,9 +329,9 @@ class fluid(object):
         self.eigv, self.eigf = lin.eig(self.A, self.B)
 
         # remove the infinite and nan eigenvectors, and their eigenfunctions
-        selector = np.isfinite(self.eigv)
-        self.eigv = self.eigv[selector]
-        self.eigf = self.eigf[:, selector]
+        # selector = np.isfinite(self.eigv)
+        # self.eigv = self.eigv[selector]
+        # self.eigf = self.eigf[:, selector]
 
     def LNS_operator(self):
         # ----Matrix Construction-----------
@@ -455,6 +470,7 @@ class fluid(object):
         f_U = intp.interp1d(self.y_data, self.U_data)
         idx = np.where(self.y < self.y_data[-1])
         y_int = self.y[idx]
+        # pdb.set_trace()
         self.U = np.concatenate([(np.ones(len(self.y) -
                                   len(y_int))) * self.U_data[-1], f_U(y_int)])
 
@@ -473,6 +489,52 @@ class fluid(object):
         f_daCD = intp.interp1d(self.y_data, self.daCD_data)
         self.daCD = np.concatenate([(np.ones(len(self.y) - len(y_int))) * 0,
                                    f_daCD(y_int)])
+
+    def adjoint_spectrum_v_eta(self):
+        I = np.identity(self.N)
+        i = (0+1j)
+        delta = self.D[1] - self.alpha**2 * I
+        Z = np.zeros((self.N, self.N))
+
+        CD = np.matrix(np.diag(self.aCD))
+        dCD = np.matrix(np.diag(self.daCD))
+        U = np.matrix(np.diag(self.U))
+        D1 = np.matrix(self.D[0])
+        D2 = np.matrix(self.D[1])
+        D4 = np.matrix(self.D[3])
+
+        dU = np.matrix(np.diag(self.dU))
+        ddU = np.matrix(np.diag(self.ddU))
+
+        self.C = 2 * dU * D1 + U*delta + (i/self.alpha)*(dCD*U*D1 + CD*dU*D1 + CD*U*D2)
+        self.E = delta
+
+        """impose the boundary condition as specified in the paper
+        "Modal Stability Theory" ASME 2014 from Hanifi in his examples codes
+           only in the v(0) and v(inf)  = 0
+        """
+
+        eps = 1e-4*(0+1j)
+
+        # v(inf) = 0
+        self.C[0, :] = np.zeros(self.N)
+        self.C[0, 0] = 1
+        self.E[0, :] = self.C[0, :]*eps
+
+        # v(0) = 0
+        self.C[-1, :] = np.zeros(self.N)
+        self.C[-1, -1] = 1
+        self.E[-1, :] = self.C[-1, :]*eps
+
+    @nb.jit
+    def solve_eig_adj(self):
+        """ solve the eigenvalues problem with the LINPACK subrutines"""
+        self.eigv_adj, self.eigf_adj = lin.eig(self.C, self.E)
+
+        # remove the infinite and nan eigenvectors, and their eigenfunctions
+        # selector = np.isfinite(self.eigv_adj)
+        # self.eigv_adj = self.eigv_adj[selector]
+        # self.eigf_adj = self.eigf_adj[:, selector]
 
     @nb.jit
     def omega_alpha_curves(self, alpha_start, alpha_end, n_step):
@@ -547,4 +609,5 @@ class fluid(object):
                  sim_param_values=np.array(self.option.values(), dtype=object),
                  U=self.U, dU=self.dU, y=self.y,
                  ddU=self.ddU, aCD=self.aCD, daCD=self.daCD,
-                 eigv=self.eigv, eigf=self.eigf, D=self.D[0])
+                 eigv=self.eigv, eigf=self.eigf, D=self.D[0],
+                 adj_eigv=self.eigv_adj, adj_eigf=self.eigf_adj)

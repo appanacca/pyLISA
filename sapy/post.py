@@ -24,6 +24,8 @@ import bokeh.plotting as bkpl
 import bokeh.models as bkmd
 from matplotlib.widgets import Button
 
+import pdb as pdb
+
 
 class viz(object):
     """
@@ -45,6 +47,8 @@ class viz(object):
                            data['sim_param_values']))
         self.N = self.option['n_points']
         self.D = data['D']
+        self.eigv_adj = data['adj_eigv']
+        self.eigf_adj = data['adj_eigf']
 
     def plot_velocity(self):
         """plot the velocity profiles"""
@@ -71,10 +75,14 @@ class viz(object):
             self.eigv_re = np.real(self.eigv)
             self.eigv_im = np.imag(self.eigv)
 
+            self.eigv_re_adj = np.real(self.eigv_adj)
+            self.eigv_im_adj = np.imag(self.eigv_adj)
+
             #  for i in np.arange(10):
             self.fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
             plt.subplots_adjust(bottom=0.2)
-            lines = ay.plot(self.eigv_re, self.eigv_im, 'b*', lw=10)
+            lines = ay.plot(self.eigv_re, self.eigv_im, 'bs', self.eigv_re_adj,
+                    -self.eigv_im_adj, 'ro', markersize=10)
             ay.set_ylabel(r'$c_i$', fontsize=32)
             ay.set_xlabel(r'$c_r$', fontsize=32)
             # lgd = ay.legend((lines),(r'$U$',r'$\delta U$',r'$\delta^2 U$'),
@@ -97,21 +105,26 @@ class viz(object):
             b_close = Button(dd, 'Close')
             b_close.on_clicked(self.close)
 
-
             plt.show()
 
     def plot_eigf(self):
-            
+
             sel_eig = self.fig.ginput(2)
 
-            omega_r_picked = (sel_eig[0][0] + sel_eig[1][0])/2
-            omega_i_picked = (sel_eig[0][1] + sel_eig[1][1])/2
+            c_r_picked = (sel_eig[0][0] + sel_eig[1][0])/2
+            c_i_picked = (sel_eig[0][1] + sel_eig[1][1])/2
 
-            omega_picked = omega_r_picked*(1+0j) + omega_i_picked*(0+1j)
-            n = np.argmin(np.abs(self.eigv - omega_picked))
+            c_range = c_r_picked*(1+0j) + c_i_picked*(0+1j)
+            n = np.argmin(np.abs(self.eigv - c_range))
+            c_picked = self.eigv[n]
+
+            adj_c_range = c_r_picked*(1+0j) - c_i_picked*(0+1j)
+            adj_n = np.argmin(np.abs(self.eigv_adj - adj_c_range))
+            adj_c_picked = self.eigv_adj[adj_n]
 
             self.eigfun_picked = self.eigf[:, n]  # *(-0.13 -0.99j
-            print omega_picked, lin.norm(self.eigfun_picked)
+            print c_picked  # , lin.norm(self.eigfun_picked)
+            print adj_c_picked
 
             if self.option['variables'] == 'v_eta':
                 # needed in the case "Euler_wave" because only the half of the
@@ -140,6 +153,18 @@ class viz(object):
                 ay3.set_ylim([0, 5])
                 # ay3.set_xlim([-1, 1])
                 ay3.grid()
+
+                fig3, ay4 = plt.subplots(1, 1)  # , dpi=50)
+                lines4 = ay4.plot(np.real(self.eigf_adj[:, n]), self.y, 'r',
+                        np.imag(self.eigf_adj[:, n]), self.y, 'g',
+                        np.sqrt(u*np.conjugate(self.eigf_adj[:, n])), self.y, 'm', lw=2)
+                ay4.set_ylabel(r'$y$', fontsize=32)
+                ay4.set_xlabel(r"$v^\dagger$", fontsize=32)
+                # lgd = ay2.legend((lines2),(r'$Re$',r'$Im$',r'$Mod$'),
+                #               loc=3, ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
+                ay4.set_ylim([0, 5])
+                # ay2.set_xlim([-1, 1])
+                ay4.grid()
 
                 plt.show()
 
