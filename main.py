@@ -3,7 +3,7 @@ import sapy.post as po
 import sapy.sensitivity as sn
 
 option = {'flow': 'DATA/G.txt',
-          'n_points': 200,
+          'n_points': 400,
           'lc': 0.16739,
           'Ymax': 1000,
           'yi': 4,
