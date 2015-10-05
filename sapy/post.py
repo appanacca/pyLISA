@@ -125,12 +125,13 @@ class viz(object):
             self.eigfun_picked = self.eigf[:, n]  # *(-0.13 -0.99j
             print c_picked  # , lin.norm(self.eigfun_picked)
             print adj_c_picked
+            print n
 
             if self.option['variables'] == 'v_eta':
                 # needed in the case "Euler_wave" because only the half of the
                 # point are in fact v the other part of the vector is alpha*v
                 v = self.eigfun_picked[0:self.option['n_points']]
-                u = np.dot((v/self.option['alpha']), self.D) * (0+1j)
+                u = np.dot((v/self.option['alpha']), self.D[0]) * (0+1j)
 
                 fig2, (ay2, ay3) = plt.subplots(1, 2)  # , dpi=50)
                 lines2 = ay2.plot(np.real(u), self.y, 'r',
@@ -204,7 +205,42 @@ class viz(object):
                 # ay3.set_xlim([-1, 1])
                 ay3.grid()
 
-                fig2.savefig('fun.png', bbox_inches='tight', dpi=150)
+                # fig2.savefig('fun.png', bbox_inches='tight', dpi=150)
+
+                p_adj = self.eigf_adj[0:self.N, n]
+                u_adj = self.eigf_adj[self.N:2*self.N, n]
+                v_adj = self.eigf_adj[2*self.N:3*self.N ,n]
+
+                fig3, (ay4, ay5, ay6) = plt.subplots(1, 3)  # , dpi = 50)
+                lines4 = ay4.plot(np.real(p_adj), self.y, 'r', np.imag(p_adj), self.y, 'g',
+                                  np.sqrt(p_adj*np.conjugate(p_adj)), self.y, 'm', lw=2)
+                ay4.set_ylabel(r'$y$', fontsize=32)
+                ay4.set_xlabel(r"$p^\dagger$", fontsize=32)
+                lgd = ay1.legend((lines4), (r'$Re$', r'$Im$', r'$Mod$'), loc=3,
+                                 ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
+                ay4.set_ylim([0, 5])
+                # ay1.set_xlim([-1, 1])
+                ay4.grid()
+
+                lines5 = ay5.plot(np.real(u_adj), self.y, 'r', np.imag(u_adj), self.y, 'g',
+                                  np.sqrt(u_adj*np.conjugate(u_adj)), self.y, 'm', lw=2)
+                ay5.set_ylabel(r'$y$', fontsize=32)
+                ay5.set_xlabel(r"$u^\dagger$", fontsize=32)
+                # lgd = ay2.legend((lines2), (r'$Re$', r'$Im$', r'$Mod$'), loc=3,
+                #                  ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
+                ay5.set_ylim([0, 5])
+                # ay2.set_xlim([-1, 1])
+                ay5.grid()
+
+                lines6 = ay6.plot(np.real(v_adj), self.y, 'r', np.imag(v_adj), self.y, 'g',
+                                  np.sqrt(v_adj*np.conjugate(v_adj)), self.y, 'm', lw=2)
+                ay6.set_ylabel(r'$y$', fontsize=32)
+                ay6.set_xlabel(r"$v^\dagger$", fontsize=32)
+                # lgd = ay3.legend((lines3), (r'$Re$', r'$Im$', r'$Mod$'), loc=3,
+                #                  ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
+                ay6.set_ylim([0, 5])
+                # ay3.set_xlim([-1, 1])
+                ay6.grid()
 
                 plt.show()
 

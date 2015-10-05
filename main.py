@@ -1,21 +1,23 @@
 import sapy.modal as sa
 import sapy.post as po
 import sapy.sensitivity as sn
+import pdb as pdb
+import pdb as pdb
 
 option = {'flow': 'DATA/G.txt',
-          'n_points': 400,
+          'n_points': 200,
           'lc': 0.16739,
           'Ymax': 1000,
           'yi': 4,
           'alpha': 0.6,
           'Re': 160,
-          'variables': 'v_eta',
+          'variables': 'p_u_v',
           'equation': 'Euler_CD',
           'mapping': ['semi_infinite_PB', [0, (46.7/13.8)]],
           'Froude': 0.02,
           'slope': 1.3e-5}
 
-
+'''
 f = sa.fluid(option)
 
 f.diff_matrix()
@@ -43,9 +45,12 @@ v.plot_spectrum()
 # f.omega_alpha_curves(0.0001,2,50)
 
 # print f.y, f.U
+'''
+om = sn.sensitivity(0.1, 'prova.npz', 17)
+#om.norm()
+#om.omega_per()
 
-# om = sn.sensitivity(10, 'prova.npz', 5)
-# om.norm()
+om.sens_spectrum()
 
 """
 option = {'flow':'hyp',

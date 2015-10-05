@@ -517,18 +517,28 @@ class fluid(object):
         "Modal Stability Theory" ASME 2014 from Hanifi in his examples codes
            only in the v(0) and v(inf)  = 0
         """
+        if self.option['variables'] == 'v_eta':
+            eps = 1e-4*(0+1j)
 
-        eps = 1e-4*(0+1j)
+            # v(inf) = 0
+            self.C[0, :] = np.zeros(self.N)
+            self.C[0, 0] = 1
+            self.E[0, :] = self.C[0, :]*eps
 
-        # v(inf) = 0
-        self.C[0, :] = np.zeros(self.N)
-        self.C[0, 0] = 1
-        self.E[0, :] = self.C[0, :]*eps
+            # v(0) = 0
+            self.C[-1, :] = np.zeros(self.N)
+            self.C[-1, -1] = 1
+            self.E[-1, :] = self.C[-1, :]*eps
 
-        # v(0) = 0
-        self.C[-1, :] = np.zeros(self.N)
-        self.C[-1, -1] = 1
-        self.E[-1, :] = self.C[-1, :]*eps
+        elif self.option['variables'] == 'p_u_v':
+
+            idx_bc = np.array([2*self.N, 3*self.N - 1])
+            self.C[idx_bc, :] = np.zeros(3*self.N)
+            self.E[idx_bc, :] = np.zeros(3*self.N)
+
+            self.C[2*self.N, 2*self.N] = 1
+            self.C[3*self.N - 1, 3*self.N - 1] = 1
+
 
     @nb.jit
     def solve_eig_adj(self):
@@ -616,5 +626,5 @@ class fluid(object):
                  sim_param_values=np.array(self.option.values(), dtype=object),
                  U=self.U, dU=self.dU, y=self.y,
                  ddU=self.ddU, aCD=self.aCD, daCD=self.daCD,
-                 eigv=self.eigv, eigf=self.eigf, D=self.D[0],
+                 eigv=self.eigv, eigf=self.eigf, D=self.D,
                  adj_eigv=self.eigv_adj, adj_eigf=self.eigf_adj)
