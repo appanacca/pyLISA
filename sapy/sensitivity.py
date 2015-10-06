@@ -28,12 +28,14 @@ import pdb as pdb
 import numpy.random as rnd
 import scipy.integrate as integ
 
+import matplotlib as mpl
+
 
 class sensitivity(object):
     """ these class compute the sensitivity of the spectrum
     due to changes in the velocity profile or the drag coefficient"""
 
-    def __init__(self, eps, in_data, idx, per_heigth=5, *args):
+    def __init__(self, eps, in_data, idx, per_U_heigth=5, per_cd_heigth=1, *args):
         # here above, eps is the maximum norm of the disturb
 
         # as input needs the in_data.npz with the simulation results
@@ -65,24 +67,47 @@ class sensitivity(object):
         # is it possible to change the associated probability
 
         self.distribution_eps = np.linspace(-eps, eps, 1000)
-        self.per_heigth = per_heigth
+        self.per_U_heigth = per_U_heigth
+        self.per_cd_heigth = per_cd_heigth
 
-    def norm(self):
+        # initialize default perturbation of U and Cd as zeros
+        self.delta_U = np.zeros(len(self.y))
+        self.delta_cd = np.zeros(len(self.y))
+
+    def u_pert(self):
         # distribution = per_heigth * (10**x / 1e100)
         ky = rnd.choice(self.distribution_ky)
-        self.delta_U = np.sin((2*np.pi)/ky * self.y[self.y <= self.per_heigth])
+        self.delta_U = np.sin((2*np.pi)/ky * self.y[self.y <= self.per_U_heigth])
         norm = lin.norm(self.delta_U)
         eps = rnd.choice(self.distribution_eps)
         self.delta_U = eps/(norm) * self.delta_U
         n_tmp = self.N - len(self.delta_U)
         self.delta_U = np.concatenate((np.zeros(n_tmp), self.delta_U))
-        print ky, eps
+        # print ky, eps
 
         '''fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
         lines = ay.plot(self.delta_U, self.y, 'b', lw=2)
         ay.set_ylabel(r'$y$', fontsize=32)
         ay.grid()
         plt.show(lines)'''
+
+    def cd_pert(self):
+        # distribution = per_heigth * (10**x / 1e100)
+        ky = rnd.choice(self.distribution_ky)
+        self.delta_cd = np.sin((2*np.pi)/ky * self.y[self.y <= self.per_cd_heigth])
+        norm = lin.norm(self.delta_cd)
+        eps = rnd.choice(self.distribution_eps)
+        self.delta_cd = eps/(norm) * self.delta_cd
+        n_tmp = self.N - len(self.delta_cd)
+        self.delta_cd = np.concatenate((np.zeros(n_tmp), self.delta_cd))
+        # print ky, eps
+
+        '''fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
+        lines = ay.plot(self.delta_cd, self.y, 'b', lw=2)
+        ay.set_ylabel(r'$y$', fontsize=32)
+        ay.grid()
+        plt.show(lines)'''
+
 
     def omega_per(self):
         i = (0 + 1j)
@@ -93,40 +118,61 @@ class sensitivity(object):
             v = self.eigf[2*self.N:3*self.N, self.idx]
             v_adj = self.eigf_adj[2*self.N:3*self.N, self.idx]
 
-        #pdb.set_trace()
-        
-        Gu = (np.dot(i*self.alpha*np.conjugate(v_adj)*v, (self.D[1] - self.alpha**2)) -
-              np.dot(i*self.alpha*self.D[1],(np.conjugate(v_adj)*v)) +
-              np.dot(self.D[0], np.conjugate(v_adj)) * np.dot(self.D[0],  v) * self.aCD)
-        
-        #pdb.set_trace()
-        '''
-        fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
+        v_adj_conj = np.conjugate(v_adj)
+
+        Gu = (v_adj_conj * np.dot((self.D[1] - self.alpha**2),v) -
+              np.dot(self.D[1],v*v_adj_conj) -
+              (i/self.alpha)*np.dot(self.D[0], v_adj_conj) * np.dot(self.D[0],  v) * self.aCD)
+
+        # pdb.set_trace()
+        '''fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
         lines = ay.plot(np.real(Gu), self.y, 'b', np.imag(Gu),
                         self.y, 'r', lw=2)
         ay.set_ylabel(r'$y$', fontsize=32)
         ay.grid()
         plt.show(lines)'''
 
-        delta_omega = integ.simps(Gu*self.delta_U, self.y)
+        # pdb.set_trace()
+
+        Gcd = -(i/self.alpha)*np.dot(self.D[0], v_adj_conj) * np.dot(self.D[0],
+                v) * self.U * 0.552  # sarebbe a* da cambiare tutta
+        # l'intefaccia per separare CD ed aCD
+
+        '''fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
+        lines = ay.plot(np.real(Gcd), self.y, 'b', np.imag(Gcd),
+                        self.y, 'r', lw=2)
+        ay.set_ylabel(r'$y$', fontsize=32)
+        ay.grid()
+        plt.show(lines)'''
+
+        delta_omega = (integ.simps(Gu*self.delta_U, self.y) +
+                       integ.simps(Gcd*self.delta_cd, self.y))
 
         return delta_omega
 
-    def sens_spectrum(self):
+    def sens_spectrum(self, fig_name, per_variab='all', *args):
         x = np.arange(0, 100, 1)
         delta_spectrum = np.zeros(len(x), dtype=np.complex_)
         for i in x:
-            self.norm()
+            if per_variab == 'u':
+                self.u_pert()
+            elif per_variab == 'cd':
+                self.cd_pert()
+            elif per_variab == 'all':
+                self.cd_pert()
+                self.u_pert()
+
             self.omega_per()
             #pdb.set_trace()
             delta_spectrum[i] = self.omega_per()
 
-        print delta_spectrum
         re = np.real(delta_spectrum) + np.real(self.eigv[self.idx])
         im = np.imag(delta_spectrum) + np.imag(self.eigv[self.idx])
-        self.fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
+
+        fig, ay = plt.subplots(figsize=(20, 20), dpi=50)
         lines = ay.plot(re, im, 'ko', np.real(self.eigv[self.idx]),
-            np.imag(self.eigv[self.idx]), 'r*', markersize=10)
+            np.imag(self.eigv[self.idx]), 'r*', markersize=20)
         ay.set_ylabel(r'$c_i$', fontsize=32)
         ay.set_xlabel(r'$c_r$', fontsize=32)
+        fig.savefig(fig_name, bbox_inches='tight', dpi=150)
         plt.show()

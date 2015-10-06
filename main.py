@@ -5,7 +5,7 @@ import pdb as pdb
 import pdb as pdb
 
 option = {'flow': 'DATA/G.txt',
-          'n_points': 200,
+          'n_points': 400,
           'lc': 0.16739,
           'Ymax': 1000,
           'yi': 4,
@@ -46,11 +46,12 @@ v.plot_spectrum()
 
 # print f.y, f.U
 '''
-om = sn.sensitivity(0.1, 'prova.npz', 17)
-#om.norm()
-#om.omega_per()
+om = sn.sensitivity(0.1, 'prova.npz', 49)
+#om.u_pert()
+#om.cd_pert()
+om.omega_per()
 
-om.sens_spectrum()
+om.sens_spectrum('ke_all_N01.png', per_variab='all')
 
 """
 option = {'flow':'hyp',

@@ -25,6 +25,7 @@ import bokeh.models as bkmd
 from matplotlib.widgets import Button
 
 import pdb as pdb
+import matplotlib as mpl
 
 
 class viz(object):
