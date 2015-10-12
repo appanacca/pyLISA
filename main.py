@@ -2,7 +2,6 @@ import sapy.modal as sa
 import sapy.post as po
 import sapy.sensitivity as sn
 import pdb as pdb
-import pdb as pdb
 
 option = {'flow': 'DATA/G.txt',
           'n_points': 400,
@@ -47,53 +46,18 @@ v.plot_spectrum()
 # print f.y, f.U
 '''
 om = sn.sensitivity(0.1, 'prova.npz', 49)
-#om.u_pert()
+#om.u_pert(9, 0.1)
 #om.cd_pert()
-om.omega_per()
+#om.c_per()
 
-om.sens_spectrum('ke_all_N01.png', per_variab='all')
-
-"""
-option = {'flow':'hyp',
-          'n_points':200,
-          'lc':0.16739,
-          'Ymax':300,
-          'perturbation':{'alpha':0.1,
-                          'Re':160},
-          'variables':'primitives',
-          'equation':'Euler',
-          'BC':'Neumann',
-          'plot_lim':[[-0.02,0.02],[0.83,0.85]]  }
-
-f = fluid(option)
-f.diff_matrix()
-f.infinite_mapping()
-f.set_hyptan()
-f.plot_velocity()
-f.LNS()
-f.solve_eig()
-# f.build_operator()
-# f.BC2()
-# f.solve_eig()
-f.plot_velocity()
-
-# f.plot_spectrum()
-f.plot_LNS_eigspectrum()
-
-# f.omega_alpha_curves(0.0001,0.18,10)
-"""
+om.sens_spectrum('ke_u_N01.png', per_variab='u')
+#om.validation()
 
 """
-f.build_operator()
-f.BC1()
-f.solve_eig()
-f.plot_spectrum()
-"""
+# PROCEDURE TO ANALYZE THE SINGLE MODES IN THE SPECTRUM
+# it needs to be implemented in the "fluid" class and generalyzed in the
+# interface
 
-
-# f.superpose_spectrum(0.0001,2,50)
-
-"""
 a = np.linspace(0.0001,2,50)
 omega_sel = np.zeros(len(a))
 for i in np.arange(len(a)):

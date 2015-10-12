@@ -46,6 +46,23 @@ class fluid(object):
         self.Fr = option['Froude']
         self.slope = option['slope']
 
+    """@classmethod
+    def init_provide_values(cls, in_data):
+        # as input needs the in_data.npz with the simulation results
+        data = np.load(in_data)
+        cls.y = data['y']
+        cls.U = data['U']
+        cls.dU = data['dU']
+        cls.ddU = data['ddU']
+        cls.aCD = data['aCD']
+        cls.daCD = data['daCD']
+        cls.option = dict(zip(data['sim_param_keys'],
+                          data['sim_param_values']))
+        cls.N = data['sim_param_values'][-1]  # ['n_points']
+
+        option = cls.y, cls.U, cls.dU, cls.ddU, cls.aCD, cls.daCD, cls.N
+        return fluid(option) """
+
     def diff_matrix(self):
         """build the differenziation matrix with chebichev discretization
         [algoritmh from Reddy & W...]"""
