@@ -4,13 +4,13 @@ import sapy.sensitivity as sn
 import pdb as pdb
 
 option = {'flow': 'DATA/G.txt',
-          'n_points': 400,
+          'n_points': 200,
           'lc': 0.16739,
           'Ymax': 1000,
-          'yi': 4,
+          'yi': 10,
           'alpha': 0.6,
           'Re': 160,
-          'variables': 'p_u_v',
+          'variables': 'v_eta',
           'equation': 'Euler_CD',
           'mapping': ['semi_infinite_PB', [0, (46.7/13.8)]],
           'Froude': 0.02,
@@ -32,26 +32,30 @@ f.interpolate()
 f.set_operator_variables()
 
 f.solve_eig()
-f.adjoint_spectrum_v_eta()
+f.adjoint_spectrum_v_eta('cont')
 f.solve_eig_adj()
 
-f.save_sim('prova')
+f.save_sim('200_ve_cont')
+#f.check_adj()
 
 
-v = po.viz('prova.npz')
+
+
+v = po.viz('200_ve_cont.npz')
 v.plot_velocity()
 v.plot_spectrum()
-# f.omega_alpha_curves(0.0001,2,50)
-
-# print f.y, f.U
+# f.omega_alpha_curves(0.0001,2,5
 '''
-om = sn.sensitivity(0.1, 'prova.npz', 49)
-#om.u_pert(9, 0.1)
-#om.cd_pert()
+om = sn.sensitivity(0.1, '200_ve_cont.npz', 16)
+#om.u_pert(0.4, 0.2)
+#om.cd_pert(0.5, 0.1)
 #om.c_per()
 
-om.sens_spectrum('ke_u_N01.png', per_variab='u')
-#om.validation()
+#om.sens_spectrum('ke_u_N01_ve.png', per_variab='u')
+om.validation()
+
+
+
 
 """
 # PROCEDURE TO ANALYZE THE SINGLE MODES IN THE SPECTRUM

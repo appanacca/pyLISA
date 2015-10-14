@@ -25,6 +25,7 @@ import bokeh.plotting as bkpl
 import bokeh.models as bkmd
 
 import pdb as pdb
+import scipy.integrate as integ
 
 
 class fluid(object):
@@ -46,7 +47,7 @@ class fluid(object):
         self.Fr = option['Froude']
         self.slope = option['slope']
 
-    """@classmethod
+    @classmethod
     def init_provide_values(cls, in_data):
         # as input needs the in_data.npz with the simulation results
         data = np.load(in_data)
@@ -61,7 +62,7 @@ class fluid(object):
         cls.N = data['sim_param_values'][-1]  # ['n_points']
 
         option = cls.y, cls.U, cls.dU, cls.ddU, cls.aCD, cls.daCD, cls.N
-        return fluid(option) """
+        return fluid(option) 
 
     def diff_matrix(self):
         """build the differenziation matrix with chebichev discretization
@@ -510,7 +511,7 @@ class fluid(object):
         self.daCD = np.concatenate([(np.ones(len(self.y) - len(y_int))) * 0,
                                    f_daCD(y_int)])
 
-    def adjoint_spectrum_v_eta(self):
+    def adjoint_spectrum_v_eta(self, method):
         I = np.identity(self.N)
         i = (0+1j)
         delta = self.D[1] - self.alpha**2 * I
@@ -526,10 +527,13 @@ class fluid(object):
         dU = np.matrix(np.diag(self.dU))
         ddU = np.matrix(np.diag(self.ddU))
 
-        # self.C = 2 * dU * D1 + U*delta + (i/self.alpha)*(dCD*U*D1 + CD*dU*D1 + CD*U*D2)
-        # self.E = delta
-        self.C = np.conjugate(np.transpose(self.A))
-        self.E = np.conjugate(np.transpose(self.B))
+        if method == 'cont':
+            self.C = 2 * dU * D1 + U*delta + ((i/self.alpha)*I)*D1*(CD*U*D1)    #(dCD*U*D1 +
+                   # CD*dU*D1 + CD*U*D2) #
+            self.E = delta
+        elif method == 'disc':
+            self.C = np.conjugate(np.transpose(self.A))
+            self.E = np.conjugate(np.transpose(self.B))
         """impose the boundary condition as specified in the paper
         "Modal Stability Theory" ASME 2014 from Hanifi in his examples codes
            only in the v(0) and v(inf)  = 0
@@ -569,6 +573,8 @@ class fluid(object):
         # selector = np.isfinite(self.eigv_adj)
         # self.eigv_adj = self.eigv_adj[selector]
         # self.eigf_adj = self.eigf_adj[:, selector]
+
+        
 
     @nb.jit
     def omega_alpha_curves(self, alpha_start, alpha_end, n_step):
@@ -645,3 +651,16 @@ class fluid(object):
                  ddU=self.ddU, aCD=self.aCD, daCD=self.daCD,
                  eigv=self.eigv, eigf=self.eigf, D=self.D,
                  adj_eigv=self.eigv_adj, adj_eigf=self.eigf_adj)
+
+    def check_adj(self):
+        H = (self.A - self.eigv[49]*self.B)
+        H_adj = (np.transpose(H))
+        u = np.sin(np.arange(self.N))
+        #pdb.set_trace()
+        x = lin.solve(H, u)
+        y = np.cos(np.arange(self.N))
+        J1 = np.dot(y, x)
+        v = lin.solve(H_adj, y)
+        J2 = np.dot(v, u)
+
+        print J1, J2
