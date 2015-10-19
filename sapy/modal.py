@@ -12,6 +12,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys as sys
 import chebdif as cb
+import clencurt as cc_int
 import scipy.linalg as lin
 import scipy.sparse.linalg as lins
 import scipy.interpolate as intp
@@ -528,8 +529,9 @@ class fluid(object):
         ddU = np.matrix(np.diag(self.ddU))
 
         if method == 'cont':
-            self.C = 2 * dU * D1 + U*delta + ((i/self.alpha)*I)*D1*(CD*U*D1)    #(dCD*U*D1 +
-                   # CD*dU*D1 + CD*U*D2) #
+            self.C = (2 * dU * D1 + U*delta +
+                     ((i/self.alpha)*I)*D1*(CD*U*D1))
+                     #((i/self.alpha)*I)*(dCD*U*D1 + CD*dU*D1 + CD*U*D2))
             self.E = delta
         elif method == 'disc':
             self.C = np.conjugate(np.transpose(self.A))
@@ -653,8 +655,8 @@ class fluid(object):
                  adj_eigv=self.eigv_adj, adj_eigf=self.eigf_adj)
 
     def check_adj(self):
-        H = (self.A - self.eigv[49]*self.B)
-        H_adj = (np.transpose(H))
+        H = (self.A - self.eigv[16]*self.B)
+        H_adj = (self.C - np.conjugate(self.eigv[16])*self.E)  # (np.transpose(H))
         u = np.sin(np.arange(self.N))
         #pdb.set_trace()
         x = lin.solve(H, u)

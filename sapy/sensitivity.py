@@ -12,6 +12,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys as sys
 import chebdif as cb
+import clencurt as cc_int
+
 import scipy.linalg as lin
 import scipy.interpolate as intp
 
@@ -192,10 +194,16 @@ class sensitivity(object):
         # normaliz = integ.trapz(f_norm, self.y)
         # print normaliz
 
-        Gu = -(v_adj_conj * np.dot((self.D[1] - self.alpha**2),v) -
+        Gu = (v_adj_conj * np.dot((self.D[1] - self.alpha**2),v) -
               np.dot(self.D[1],v*v_adj_conj) -
               (i/self.alpha) *np.dot(self.D[0], v_adj_conj) * np.dot(self.D[0],  v) * self.aCD)
-
+        dv_adj = np.gradient(v_adj_conj) / np.gradient(self.y)
+        vv = v*v_adj_conj
+        d_vv = np.gradient(vv) / np.gradient(self.y)
+        dd_vv = np.gradient(d_vv) / np.gradient(self.y)
+        
+        Gu = (v_adj_conj * np.dot((self.D[1] - self.alpha**2),v) -
+              dd_vv - (i/self.alpha) * dv_adj * np.dot(self.D[0],  v) * self.aCD)
         #Gu = np.dot(self.D[1],v*v_adj_conj)
         #pdb.set_trace()
 
@@ -272,13 +280,13 @@ class sensitivity(object):
         fig.savefig(fig_name, bbox_inches='tight', dpi=150)
         plt.show()
 
-    def validation(self):
+    def validation(self, pos, amp):
         """ check if the sensitivity of an eigenvalue is the same with the
         adjoint procedure, or with a simple superposition of the base flow
         plus the random perturbation:
             dc = c(U+dU) - c(U) = dc(adjoint) """
 
-        self.u_pert(3, 0.2)  # call the perturbation creator
+        self.u_pert(pos, amp)  # call the perturbation creator
         f_u = intp.interp1d(self.y_new, self.delta_U)
         self.delta_U = f_u(self.y)
 
@@ -347,5 +355,5 @@ class sensitivity(object):
         print 'old:', self.eigv[16]
         print 'diff:', eigv_new-self.eigv[16]
 
-        self.u_pert(3, 0.2)
+        self.u_pert(pos, amp)
         print self.c_per()

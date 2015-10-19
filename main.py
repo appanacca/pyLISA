@@ -16,7 +16,7 @@ option = {'flow': 'DATA/G.txt',
           'Froude': 0.02,
           'slope': 1.3e-5}
 
-'''
+
 f = sa.fluid(option)
 
 f.diff_matrix()
@@ -36,7 +36,7 @@ f.adjoint_spectrum_v_eta('cont')
 f.solve_eig_adj()
 
 f.save_sim('200_ve_cont')
-#f.check_adj()
+f.check_adj()
 
 
 
@@ -45,14 +45,14 @@ v = po.viz('200_ve_cont.npz')
 v.plot_velocity()
 v.plot_spectrum()
 # f.omega_alpha_curves(0.0001,2,5
-'''
+
 om = sn.sensitivity(0.1, '200_ve_cont.npz', 16)
 #om.u_pert(0.4, 0.2)
 #om.cd_pert(0.5, 0.1)
 #om.c_per()
 
 #om.sens_spectrum('ke_u_N01_ve.png', per_variab='u')
-om.validation()
+om.validation(0.2, 0.2)
 
 
 
