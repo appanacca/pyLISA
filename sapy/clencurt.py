@@ -1,5 +1,5 @@
-import numpy as np
 from __future__ import division
+import numpy as np
 
 
 def clencurt(N):
@@ -23,4 +23,4 @@ def clencurt(N):
         for k in np.arange(1, N/2):
             v = v - 2*np.cos(2*k*theta[ii])/(4* k**2 -1) 
     w[ii] = 2*v/N
-    return x,w
+    return w

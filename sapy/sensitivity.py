@@ -60,6 +60,8 @@ class sensitivity(object):
         self.eigf_adj = data['adj_eigf']
         self.alpha = self.option['alpha']
 
+        self.integ_matrix = data['integ_matrix']
+
         self.idx = idx   # idx is the index of the eigenvalue
         # which is the one who want to compute the sensitivity
         # the idx should be find with the bokeh plot or the
@@ -75,8 +77,8 @@ class sensitivity(object):
         self.per_cd_heigth = per_cd_heigth
 
         # pdb.set_trace()
-        self.y_new = np.concatenate((np.linspace(0, 10, 10000),
-                                     np.linspace(10.001, self.y[0],1000)))
+        #self.y_new = np.concatenate((np.linspace(0, 10, 10000),
+        #                             np.linspace(10.001, self.y[0],1000)))
         '''
         f_U = intp.interp1d(self.y, self.U)
         self.U = f_U(self.y_new)
@@ -84,13 +86,17 @@ class sensitivity(object):
         self.dU = f_dU(self.y_new)
         f_ddU = intp.interp1d(self.y, self.ddU)
         self.ddU = f_ddU(self.y_new)'''
-        
+
+        self.y_new = self.y
+
+
         # initialize default perturbation of U and Cd as zeros
         self.delta_U = np.zeros(len(self.y_new))
         self.delta_cd = np.zeros(len(self.y_new))
 
         self.sim_param_values = data['sim_param_values']
         self.sim_param_keys = data['sim_param_keys']
+
 
     def u_pert_sin(self):
         # distribution = per_heigth * (10**x / 1e100)
@@ -126,7 +132,7 @@ class sensitivity(object):
         # print lin.norm(self.delta_U)
 
         fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
-        lines = ay.plot(self.delta_U, self.y_new, 'b', lw=2)
+        lines = ay.plot(self.delta_U, self.y, 'b', lw=2)
         ay.set_ylabel(r'$y$', fontsize=32)
         ay.set_ylim([0,10])
         ay.grid()
@@ -207,16 +213,18 @@ class sensitivity(object):
         #Gu = np.dot(self.D[1],v*v_adj_conj)
         #pdb.set_trace()
 
-
+        '''
         f_Gu = intp.interp1d(self.y, Gu)
         Gu = f_Gu(self.y_new)
 
         #Gu = sig.savgol_filter(np.dot(self.D[0], v_adj_conj), 9,8)
         #Gu = v*v_adj_conj#np.dot(self.D[0], v_adj_conj)
-        # pdb.set_trace()
+        # pdb.set_trace()'''
+
+
         fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
-        lines = ay.plot(np.real(Gu), self.y_new, 'b', np.imag(Gu),
-                        self.y_new, 'r', lw=2)
+        lines = ay.plot(np.real(Gu), self.y, 'b', np.imag(Gu),
+                        self.y, 'r', lw=2)
         ay.set_ylabel(r'$y$', fontsize=32)
         lgd = ay.legend((lines), (r'$Re$', r'$Im$'), loc=3,
                                  ncol=2, bbox_to_anchor=(0, 1), fontsize=32)
@@ -229,10 +237,10 @@ class sensitivity(object):
         Gcd = -(i/self.alpha)*np.dot(self.D[0], v_adj_conj) * np.dot(self.D[0],
                 v) * self.U * 0.552  # sarebbe a* da cambiare tutta
         # l'intefaccia per separare CD ed aCD
-
+        '''
         f_Gcd = intp.interp1d(self.y, Gcd)
         Gcd = f_Gcd(self.y_new)
-
+        '''
         '''fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
         lines = ay.plot(np.real(Gcd), self.y_new, 'b', np.imag(Gcd),
                         self.y_new, 'r', lw=2)
@@ -243,8 +251,10 @@ class sensitivity(object):
         ay.set_ylim([0,5])
         plt.show(lines)'''
 
-        delta_c = (integ.trapz(Gu*self.delta_U, self.y_new) +
-                       integ.trapz(Gcd*self.delta_cd, self.y_new))
+        delta_c = np.sum((Gu*self.delta_U)*self.integ_matrix)
+
+        #delta_c = (integ.trapz(Gu*self.delta_U, self.y_new) +
+        #               integ.trapz(Gcd*self.delta_cd, self.y_new))
         return delta_c
 
     def sens_spectrum(self, fig_name, per_variab='all', *args):
@@ -280,7 +290,7 @@ class sensitivity(object):
         fig.savefig(fig_name, bbox_inches='tight', dpi=150)
         plt.show()
 
-    def validation(self, pos, amp):
+    def validation(self, pos, amp, eig_idx):
         """ check if the sensitivity of an eigenvalue is the same with the
         adjoint procedure, or with a simple superposition of the base flow
         plus the random perturbation:
@@ -324,8 +334,10 @@ class sensitivity(object):
         # pdb.set_trace()
 
         f.diff_matrix()
+        f.integ_matrix()
+
         f.read_velocity_profile()
-        f.mapping()        
+        f.mapping()
 
         f.y = self.y
         f.U = self.U
@@ -352,8 +364,8 @@ class sensitivity(object):
         eigv_new = f.eigv[idx_new]
         
         print 'new:', eigv_new
-        print 'old:', self.eigv[16]
-        print 'diff:', eigv_new-self.eigv[16]
+        print 'old:', self.eigv[eig_idx]
+        print 'diff:', eigv_new-self.eigv[eig_idx]
 
         self.u_pert(pos, amp)
         print self.c_per()

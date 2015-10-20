@@ -63,7 +63,7 @@ class fluid(object):
         cls.N = data['sim_param_values'][-1]  # ['n_points']
 
         option = cls.y, cls.U, cls.dU, cls.ddU, cls.aCD, cls.daCD, cls.N
-        return fluid(option) 
+        return fluid(option)
 
     def diff_matrix(self):
         """build the differenziation matrix with chebichev discretization
@@ -72,6 +72,12 @@ class fluid(object):
         self.y, self.D = cb.chebdif(self.N, 4)
         self.D = self.D + 0j
         # summing 0j is needed in order to make the D matrices immaginary
+
+    def integ_matrix(self):
+        """build the quadrature wheigth matrix with chebichev discretization,
+        using Curtis- Clenshaw quadrature rules [algoritmh from Trefethen
+        "Spectral methods in matlab"]"""
+        self.integ_matrix = cc_int.clencurt(self.N-1)
 
     def read_velocity_profile(self):
         """ read from a file the velocity profile store in a
@@ -130,6 +136,12 @@ class fluid(object):
             s = self.y[1:-1]
             r = (s + 1)/2
             L = (ymax*np.sqrt(1-r[0]**2))/(2*r[0])
+
+            # DERIVATIVE OF THE MAPPING FUNCTION, NEEDED FOR THE QUADRATURE
+            # MATRIX
+            map_integral = 8*L/(-(self.y + 1)**2 + 4)**(3/2)
+            map_integral[0] = map_integral[1]*10
+
             self.y = (L*(s+1))/(np.sqrt((1 - ((s+1)**2)/4)))
             y_inf = 2*self.y[0]  # 2000
             self.y = np.concatenate([np.array([y_inf]), self.y])
@@ -141,6 +153,9 @@ class fluid(object):
             xi[:, 1] = - 24 * self.y * L**2 / K**5
             xi[:, 2] = 96 * (self.y**2 - L**2) * L**2 / K**7
             xi[:, 3] = 480 * self.y * (3 * L**2 - self.y**2) * L**2 / K**9
+
+            # MAP THE QUADRATURE WHEIGTH COEFFICIENT MATRIX
+            self.integ_matrix = self.integ_matrix*map_integral
 
         elif self.option['mapping'][0] == 'semi_infinite_SH':
             ymax = self.option['Ymax']
@@ -536,6 +551,18 @@ class fluid(object):
         elif method == 'disc':
             self.C = np.conjugate(np.transpose(self.A))
             self.E = np.conjugate(np.transpose(self.B))
+            self.M = np.diag(self.integ_matrix)
+
+            self.C = np.matrix(self.C)
+            self.E = np.matrix(self.E)
+            self.M = np.matrix(self.M)
+            M_inv = lin.inv(self.M)
+            M_t = np.transpose(self.M)
+
+            self.C = (M_inv*self.C)*M_t
+            self.E = (M_inv*self.E)*M_t
+
+
         """impose the boundary condition as specified in the paper
         "Modal Stability Theory" ASME 2014 from Hanifi in his examples codes
            only in the v(0) and v(inf)  = 0
@@ -575,6 +602,8 @@ class fluid(object):
         # selector = np.isfinite(self.eigv_adj)
         # self.eigv_adj = self.eigv_adj[selector]
         # self.eigf_adj = self.eigf_adj[:, selector]
+
+
 
         
 
@@ -652,7 +681,8 @@ class fluid(object):
                  U=self.U, dU=self.dU, y=self.y,
                  ddU=self.ddU, aCD=self.aCD, daCD=self.daCD,
                  eigv=self.eigv, eigf=self.eigf, D=self.D,
-                 adj_eigv=self.eigv_adj, adj_eigf=self.eigf_adj)
+                 adj_eigv=self.eigv_adj, adj_eigf=self.eigf_adj,
+                 integ_matrix=self.integ_matrix)
 
     def check_adj(self):
         H = (self.A - self.eigv[16]*self.B)
