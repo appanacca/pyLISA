@@ -92,7 +92,7 @@ class fluid(object):
         self.lc = self.option['lc']  # 0.16739  #lc* = 0.22*(h-z1) / h
 
     def set_poiseuille(self):
-        """set the members velocity and its derivatives as couette flow"""
+        """set the members velocity and its derivatives as poiseuille flow"""
         Upoiseuille = (lambda y: 1-y**2)
         dUpoiseuille = (lambda y: -y*2)
         ddUpoiseuille = -np.ones(len(self.y))*2
@@ -101,6 +101,18 @@ class fluid(object):
         self.ddU = ddUpoiseuille
         self.aCD = np.zeros(self.N)
         self.daCD = np.zeros(self.N)
+
+    def set_couette(self):
+        """set the members velocity and its derivatives as couette flow"""
+        Upoiseuille = (lambda y: y)
+        dUpoiseuille = np.ones(len(self.y))
+        ddUpoiseuille = np.zeros(len(self.y))
+        self.U = Upoiseuille(self.y)
+        self.dU = dUpoiseuille
+        self.ddU = ddUpoiseuille
+        self.aCD = np.zeros(self.N)
+        self.daCD = np.zeros(self.N)
+
 
     def set_hyptan(self):
         """set the members velocity and its derivatives as hyperbolic tangent
@@ -249,12 +261,12 @@ class fluid(object):
             print "not implemented yet"
         elif self.option['equation'] == 'LNS':
             self.A = (i/(self.alpha*self.Re)) *\
-                    (D4 - 2*self.alpha**2 * D2 + self.alpha**4 * I)\
+                    (D4 +I*self.alpha**4 -2*self.alpha**2 *D2)\
                     - ddU + U*delta
             self.B = delta
         elif self.option['equation'] == 'LNS_CD':
             self.A = (i/(self.alpha*self.Re)) *\
-                    (D4 - 2 * self.alpha**2 * D2 + self.alpha**4 * I)\
+                    (delta)**2\
                     - ddU + U*delta - (i/self.alpha) *\
                     (dCD*U*D1 + CD*dU*D1 + CD*U*D2)
             self.B = delta
@@ -544,10 +556,16 @@ class fluid(object):
         ddU = np.matrix(np.diag(self.ddU))
 
         if method == 'cont':
-            self.C = (2 * dU * D1 + U*delta +
+            """self.C = (2 * dU * D1 + U*delta +
                      ((i/self.alpha)*I)*D1*(CD*U*D1))
                      #((i/self.alpha)*I)*(dCD*U*D1 + CD*dU*D1 + CD*U*D2))
+            self.E = delta"""
+
+            self.C = (-i/(self.alpha*self.Re)) *\
+                     (D4 +I*self.alpha**4 -2*self.alpha**2 *D2)\
+                    - 2*dU*D1 + U*delta
             self.E = delta
+
         elif method == 'disc':
             self.C = np.conjugate(np.transpose(self.A))
             self.E = np.conjugate(np.transpose(self.B))

@@ -191,9 +191,11 @@ class sensitivity(object):
         v_adj_conj = np.conjugate(v_adj)
 
         f_norm = (v_adj_conj * np.dot((self.D[1] - self.alpha**2),v))
-        normaliz = integ.trapz(f_norm[self.y<10], self.y[self.y<10])
+        normaliz = np.sum(self.integ_matrix*f_norm)
 
         v_adj_conj = v_adj_conj / normaliz
+
+        I = np.eye(len(v))
 
         # TEST FOR NORMALIZATION
         # f_norm = (v_adj_conj * np.dot((self.D[1] - self.alpha**2),v))
@@ -213,6 +215,8 @@ class sensitivity(object):
         #Gu = np.dot(self.D[1],v*v_adj_conj)
         #pdb.set_trace()
 
+        Gu = (v_adj_conj * np.dot((self.D[1] - I*self.alpha**2),v)) -d_vv#np.dot(self.D[1],v*v_adj_conj)
+
         '''
         f_Gu = intp.interp1d(self.y, Gu)
         Gu = f_Gu(self.y_new)
@@ -221,10 +225,13 @@ class sensitivity(object):
         #Gu = v*v_adj_conj#np.dot(self.D[0], v_adj_conj)
         # pdb.set_trace()'''
 
+        phase_Gu = np.arctan(np.imag(Gu)/np.real(Gu))
+
 
         fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
         lines = ay.plot(np.real(Gu), self.y, 'b', np.imag(Gu),
-                        self.y, 'r', lw=2)
+                        self.y, 'r', np.abs(Gu), self.y, 'm', phase_Gu,
+                        self.y, 'k', lw=2)
         ay.set_ylabel(r'$y$', fontsize=32)
         lgd = ay.legend((lines), (r'$Re$', r'$Im$'), loc=3,
                                  ncol=2, bbox_to_anchor=(0, 1), fontsize=32)
@@ -336,8 +343,9 @@ class sensitivity(object):
         f.diff_matrix()
         f.integ_matrix()
 
-        f.read_velocity_profile()
-        f.mapping()
+        #f.read_velocity_profile()
+        #f.mapping()
+        f.set_couette()
 
         f.y = self.y
         f.U = self.U
