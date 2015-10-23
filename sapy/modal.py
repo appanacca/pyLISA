@@ -291,6 +291,11 @@ class fluid(object):
             B2 = np.concatenate((I, Z), axis=1)
             self.B = np.concatenate((B1, B2))
 
+        self.A_noBC = np.copy(self.A)
+        self.B_noBC = np.copy(self.B)
+        #self.A_noBC = self.A
+        #self.B_noBC = self.B
+
         if self.option['equation'] == 'Euler':
             self.BC2()
         elif self.option['equation'] == 'Euler_CD':
@@ -563,12 +568,12 @@ class fluid(object):
 
             self.C = (-i/(self.alpha*self.Re)) *\
                      (D4 +I*self.alpha**4 -2*self.alpha**2 *D2)\
-                    - 2*dU*D1 + U*delta
+                    + 2*dU*D1 + U*delta
             self.E = delta
 
         elif method == 'disc':
-            self.C = np.conjugate(np.transpose(self.A))
-            self.E = np.conjugate(np.transpose(self.B))
+            self.C = np.conjugate(np.transpose(self.A_noBC))
+            self.E = np.conjugate(np.transpose(self.B_noBC))
             self.M = np.diag(self.integ_matrix)
 
             self.C = np.matrix(self.C)
@@ -579,7 +584,6 @@ class fluid(object):
 
             self.C = (M_inv*self.C)*M_t
             self.E = (M_inv*self.E)*M_t
-
 
         """impose the boundary condition as specified in the paper
         "Modal Stability Theory" ASME 2014 from Hanifi in his examples codes

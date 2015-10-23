@@ -131,12 +131,12 @@ class sensitivity(object):
 
         # print lin.norm(self.delta_U)
 
-        fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
+        '''fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
         lines = ay.plot(self.delta_U, self.y, 'b', lw=2)
         ay.set_ylabel(r'$y$', fontsize=32)
         ay.set_ylim([0,10])
         ay.grid()
-        plt.show(lines)
+        plt.show(lines)'''
 
     def cd_pert_sin(self):
         # distribution = per_heigth * (10**x / 1e100)
@@ -198,9 +198,9 @@ class sensitivity(object):
         I = np.eye(len(v))
 
         # TEST FOR NORMALIZATION
-        # f_norm = (v_adj_conj * np.dot((self.D[1] - self.alpha**2),v))
-        # normaliz = integ.trapz(f_norm, self.y)
-        # print normaliz
+        #f_norm = (v_adj_conj * np.dot((self.D[1] - self.alpha**2),v))
+        #normaliz = np.sum(self.integ_matrix*f_norm)
+        #print normaliz
 
         Gu = (v_adj_conj * np.dot((self.D[1] - self.alpha**2),v) -
               np.dot(self.D[1],v*v_adj_conj) -
@@ -215,8 +215,8 @@ class sensitivity(object):
         #Gu = np.dot(self.D[1],v*v_adj_conj)
         #pdb.set_trace()
 
-        Gu = (v_adj_conj * np.dot((self.D[1] - I*self.alpha**2),v)) -d_vv#np.dot(self.D[1],v*v_adj_conj)
-
+        Gu = (v_adj_conj * np.dot((self.D[1] - I*self.alpha**2),v)) -np.dot(self.D[1],v*v_adj_conj)
+        
         '''
         f_Gu = intp.interp1d(self.y, Gu)
         Gu = f_Gu(self.y_new)
@@ -230,8 +230,7 @@ class sensitivity(object):
 
         fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
         lines = ay.plot(np.real(Gu), self.y, 'b', np.imag(Gu),
-                        self.y, 'r', np.abs(Gu), self.y, 'm', phase_Gu,
-                        self.y, 'k', lw=2)
+                        self.y, 'r', np.abs(Gu), self.y, 'm', lw=2)
         ay.set_ylabel(r'$y$', fontsize=32)
         lgd = ay.legend((lines), (r'$Re$', r'$Im$'), loc=3,
                                  ncol=2, bbox_to_anchor=(0, 1), fontsize=32)
