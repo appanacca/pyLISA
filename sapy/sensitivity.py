@@ -202,20 +202,20 @@ class sensitivity(object):
         #normaliz = np.sum(self.integ_matrix*f_norm)
         #print normaliz
 
-        Gu = (v_adj_conj * np.dot((self.D[1] - self.alpha**2),v) -
+        Gu = (v_adj_conj * np.dot((self.D[1] - I*self.alpha**2),v) -
               np.dot(self.D[1],v*v_adj_conj) -
               (i/self.alpha) *np.dot(self.D[0], v_adj_conj) * np.dot(self.D[0],  v) * self.aCD)
         dv_adj = np.gradient(v_adj_conj) / np.gradient(self.y)
         vv = v*v_adj_conj
         d_vv = np.gradient(vv) / np.gradient(self.y)
         dd_vv = np.gradient(d_vv) / np.gradient(self.y)
-        
-        Gu = (v_adj_conj * np.dot((self.D[1] - self.alpha**2),v) -
+
+        Gu = (v_adj_conj * np.dot((self.D[1] - I*self.alpha**2),v) -
               dd_vv - (i/self.alpha) * dv_adj * np.dot(self.D[0],  v) * self.aCD)
         #Gu = np.dot(self.D[1],v*v_adj_conj)
         #pdb.set_trace()
 
-        Gu = (v_adj_conj * np.dot((self.D[1] - I*self.alpha**2),v)) -np.dot(self.D[1],v*v_adj_conj)
+        #Gu = (v_adj_conj * np.dot((self.D[1] - I*self.alpha**2),v)) -np.dot(self.D[1],v*v_adj_conj)
         
         '''
         f_Gu = intp.interp1d(self.y, Gu)
@@ -229,8 +229,8 @@ class sensitivity(object):
 
 
         fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
-        lines = ay.plot(np.real(Gu), self.y, 'b', np.imag(Gu),
-                        self.y, 'r', np.abs(Gu), self.y, 'm', lw=2)
+        lines = ay.plot(np.real(Gu), self.y, 'r', np.imag(Gu),
+                        self.y, 'g', np.abs(Gu), self.y, 'm', lw=2)
         ay.set_ylabel(r'$y$', fontsize=32)
         lgd = ay.legend((lines), (r'$Re$', r'$Im$'), loc=3,
                                  ncol=2, bbox_to_anchor=(0, 1), fontsize=32)

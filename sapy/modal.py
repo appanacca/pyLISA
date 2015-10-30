@@ -126,7 +126,7 @@ class fluid(object):
         self.aCD = np.zeros(self.N)
         self.daCD = np.zeros(self.N)
 
-    def set_blasisus(self, y_gl):
+    def set_blasius(self, y_gl):
         """set the members velocity and its derivatives as boundary layer
         flow"""
         self.U, self.dU, self.ddU = bl.blasius(y_gl)
@@ -462,6 +462,9 @@ class fluid(object):
 
         self.B = np.concatenate((BA, BB, BC))
 
+        self.A_noBC = np.copy(self.A)
+        self.B_noBC = np.copy(self.B)
+       
         if self.option['equation'] == 'Euler':
             self.BC_LNS_neu_v()
         elif self.option['equation'] == 'Euler_wave':
@@ -561,20 +564,24 @@ class fluid(object):
         ddU = np.matrix(np.diag(self.ddU))
 
         if method == 'cont':
-            """self.C = (2 * dU * D1 + U*delta +
+            self.C = (2 * dU * D1 + U*delta +
                      ((i/self.alpha)*I)*D1*(CD*U*D1))
                      #((i/self.alpha)*I)*(dCD*U*D1 + CD*dU*D1 + CD*U*D2))
-            self.E = delta"""
+            self.E = delta
 
-            self.C = (-i/(self.alpha*self.Re)) *\
+            """self.C = (-i/(self.alpha*self.Re)) *\
                      (D4 +I*self.alpha**4 -2*self.alpha**2 *D2)\
                     + 2*dU*D1 + U*delta
-            self.E = delta
+            self.E = delta"""
 
         elif method == 'disc':
             self.C = np.conjugate(np.transpose(self.A_noBC))
             self.E = np.conjugate(np.transpose(self.B_noBC))
-            self.M = np.diag(self.integ_matrix)
+            if self.option['variables'] == 'p_u_v':
+                 self.M = (np.diag(np.concatenate((self.integ_matrix,
+                     self.integ_matrix, self.integ_matrix))))
+            elif self.option['variables'] == 'v_eta':
+                 self.M = np.diag(self.integ_matrix)
 
             self.C = np.matrix(self.C)
             self.E = np.matrix(self.E)
@@ -601,6 +608,14 @@ class fluid(object):
             self.C[-1, :] = np.zeros(self.N)
             self.C[-1, -1] = 1
             self.E[-1, :] = self.C[-1, :]*eps
+
+            """# v'(inf) = 0
+            self.C[1, :] = self.D[0][0, :]
+            self.E[1, :] = self.C[1, :]*eps
+
+            # v'(0) = 0
+            self.C[-2, :] = self.D[0][-1, :]
+            self.E[-2, :] = self.C[-2, :]*eps"""
 
         elif self.option['variables'] == 'p_u_v':
 

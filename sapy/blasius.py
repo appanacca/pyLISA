@@ -6,9 +6,6 @@ import matplotlib.pyplot as plt
 import scipy.interpolate as intp
 
 
-
-
-
 def blasius(y_gl):
 	"""compute the boundary layer profile """
 	
@@ -97,7 +94,7 @@ def blasius(y_gl):
 	#plt.show()
 
 	#y=y_gl
-	resc=np.sqrt(2)/1.7207876
+	resc=np.sqrt(2)/2.4 #1.7207876
 	ym=10*resc
 	iu=intp.interp1d(n,u)
 	idu=intp.interp1d(n,du)

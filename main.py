@@ -4,13 +4,13 @@ import sapy.sensitivity as sn
 import pdb as pdb
 
 option = {'flow': 'DATA/G.txt',
-          'n_points': 300,
+          'n_points': 250,
           'lc': 0.16739,
           'Ymax': 1000,
           'yi': 10,
           'alpha': 0.6,
           'Re': 160,
-          'variables': 'v_eta',
+          'variables': 'p_u_v',
           'equation': 'Euler_CD',
           'mapping': ['semi_infinite_PB', [0, (46.7/13.8)]],
           'Froude': 0.02,
@@ -36,18 +36,18 @@ f.solve_eig()
 f.adjoint_spectrum_v_eta('disc')
 f.solve_eig_adj()
 
-f.save_sim('250_ve_cont')
-f.check_adj()
+f.save_sim('200_ve_cont')
+#f.check_adj()
 
 
 
 
-v = po.viz('250_ve_cont.npz')
+v = po.viz('200_ve_cont.npz')
 v.plot_velocity()
 v.plot_spectrum()
 # f.omega_alpha_curves(0.0001,2,5
 
-om = sn.sensitivity(0.1, '250_ve_cont.npz', 31)
+om = sn.sensitivity(0.1, '200_ve_cont.npz', 31)
 #om.u_pert(0.4, 0.2)
 #om.cd_pert(0.5, 0.1)
 #om.c_per()
