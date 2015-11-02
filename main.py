@@ -4,7 +4,7 @@ import sapy.sensitivity as sn
 import pdb as pdb
 
 option = {'flow': 'DATA/G.txt',
-          'n_points': 250,
+          'n_points': 200,
           'lc': 0.16739,
           'Ymax': 1000,
           'yi': 10,
@@ -47,13 +47,13 @@ v.plot_velocity()
 v.plot_spectrum()
 # f.omega_alpha_curves(0.0001,2,5
 
-om = sn.sensitivity(0.1, '200_ve_cont.npz', 31)
+om = sn.sensitivity(0.01, '200_ve_cont.npz', 17)
 #om.u_pert(0.4, 0.2)
 #om.cd_pert(0.5, 0.1)
 #om.c_per()
 
 #om.sens_spectrum('ke_u_N01_ve.png', per_variab='u')
-om.validation(0.5, 0.2, 31)
+om.validation(0.7, 0.2, 17)
 
 
 

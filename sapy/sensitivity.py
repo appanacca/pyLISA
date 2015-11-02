@@ -98,7 +98,7 @@ class sensitivity(object):
         self.sim_param_keys = data['sim_param_keys']
 
 
-    def u_pert_sin(self):
+    """def u_pert_sin(self):
         # distribution = per_heigth * (10**x / 1e100)
         ky = rnd.choice(self.distribution_ky)
         self.delta_U = np.sin((2*np.pi)/ky * self.y[self.y <= self.per_U_heigth])
@@ -113,7 +113,7 @@ class sensitivity(object):
         lines = ay.plot(self.delta_U, self.y, 'b', lw=2)
         ay.set_ylabel(r'$y$', fontsize=32)
         ay.grid()
-        plt.show(lines)'''
+        plt.show(lines)''' """
 
     def u_pert(self, y0, eps):
         ky = np.pi / eps
@@ -130,15 +130,18 @@ class sensitivity(object):
                 np.cos(ky*(self.y_new[(self.y_new > y0-eps) & (self.y_new < y0+eps)]-y0)))
 
         # print lin.norm(self.delta_U)
+        mpl.rc('xtick', labelsize=25) 
+        mpl.rc('ytick', labelsize=25)
 
-        '''fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
+        fig, ay = plt.subplots(figsize=(10, 10), dpi=100)
         lines = ay.plot(self.delta_U, self.y, 'b', lw=2)
         ay.set_ylabel(r'$y$', fontsize=32)
-        ay.set_ylim([0,10])
+        ay.set_xlabel(r'$\delta U$', fontsize=32)        
+        ay.set_ylim([0,5])
         ay.grid()
-        plt.show(lines)'''
+        plt.show(lines)
 
-    def cd_pert_sin(self):
+    """def cd_pert_sin(self):
         # distribution = per_heigth * (10**x / 1e100)
         ky = rnd.choice(self.distribution_ky)
         self.delta_cd = np.sin((2*np.pi)/ky * self.y[self.y <= self.per_cd_heigth])
@@ -153,7 +156,7 @@ class sensitivity(object):
         lines = ay.plot(self.delta_cd, self.y, 'b', lw=2)
         ay.set_ylabel(r'$y$', fontsize=32)
         ay.grid()
-        plt.show(lines)'''
+        plt.show(lines)''' """
 
     def cd_pert(self, y0, eps):
         ky = np.pi / eps
@@ -171,12 +174,12 @@ class sensitivity(object):
 
         # print lin.norm(self.delta_U)
 
-        fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
+        '''fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
         lines = ay.plot(self.delta_cd, self.y_new, 'b', lw=2)
         ay.set_ylabel(r'$y$', fontsize=32)
         ay.set_ylim([0,1.5])
         ay.grid()
-        plt.show(lines)
+        plt.show(lines)'''
 
 
     def c_per(self):
@@ -184,91 +187,108 @@ class sensitivity(object):
         if self.option['variables'] == 'v_eta':
             v = self.eigf[:, self.idx]
             v_adj = self.eigf_adj[:, self.idx]
+            
+            v_adj_conj = np.conjugate(v_adj)
+
+            f_norm = (v_adj_conj * np.dot((self.D[1] - self.alpha**2),v))
+            normaliz = np.sum(self.integ_matrix*f_norm)
+
+            v_adj_conj = v_adj_conj / normaliz
+
+            I = np.eye(len(v))
+
+            # TEST FOR NORMALIZATION
+            #f_norm = (v_adj_conj * np.dot((self.D[1] - self.alpha**2),v))
+            #normaliz = np.sum(self.integ_matrix*f_norm)
+            #print normaliz
+
+            Gu = (v_adj_conj * np.dot((self.D[1] - I*self.alpha**2),v) -
+                  np.dot(self.D[1],v*v_adj_conj) -
+                  (i/self.alpha) *np.dot(self.D[0], v_adj_conj) * np.dot(self.D[0],  v) * self.aCD)
+            dv_adj = np.gradient(v_adj_conj) / np.gradient(self.y)
+            vv = v*v_adj_conj
+            d_vv = np.gradient(vv) / np.gradient(self.y)
+            dd_vv = np.gradient(d_vv) / np.gradient(self.y)
+
+            Gu = (v_adj_conj * np.dot((self.D[1] - I*self.alpha**2),v) -
+                  dd_vv - (i/self.alpha) * dv_adj * np.dot(self.D[0],  v) * self.aCD)
+            #Gu = np.dot(self.D[1],v*v_adj_conj)
+            #pdb.set_trace()
+
+            #Gu = (v_adj_conj * np.dot((self.D[1] - I*self.alpha**2),v)) -np.dot(self.D[1],v*v_adj_conj)
+
+            Gcd = -(i/self.alpha)*np.dot(self.D[0], v_adj_conj) * np.dot(self.D[0],
+                v) * self.U * 0.552  # sarebbe a* da cambiare tutta
+                                     # l'intefaccia per separare CD ed aCD
+
+
         elif self.option['variables'] == 'p_u_v':
             v = self.eigf[2*self.N:3*self.N, self.idx]
             v_adj = self.eigf_adj[2*self.N:3*self.N, self.idx]
 
-        v_adj_conj = np.conjugate(v_adj)
+            u = self.eigf[self.N:2*self.N, self.idx]
+            u_adj = self.eigf_adj[self.N:2*self.N, self.idx]
 
-        f_norm = (v_adj_conj * np.dot((self.D[1] - self.alpha**2),v))
-        normaliz = np.sum(self.integ_matrix*f_norm)
+            p = self.eigf[0:self.N, self.idx]
+            p_adj = self.eigf_adj[0:self.N, self.idx]
 
-        v_adj_conj = v_adj_conj / normaliz
+            v_adj_conj = np.conjugate(v_adj)
+            u_adj_conj = np.conjugate(u_adj)
 
-        I = np.eye(len(v))
+            f_norm = v_adj_conj*v + u*u_adj_conj*p
+            normaliz = np.sum(self.integ_matrix*f_norm)
 
-        # TEST FOR NORMALIZATION
-        #f_norm = (v_adj_conj * np.dot((self.D[1] - self.alpha**2),v))
-        #normaliz = np.sum(self.integ_matrix*f_norm)
-        #print normaliz
+            I = np.eye(len(v))
+            i = (0 +1j)
 
-        Gu = (v_adj_conj * np.dot((self.D[1] - I*self.alpha**2),v) -
-              np.dot(self.D[1],v*v_adj_conj) -
-              (i/self.alpha) *np.dot(self.D[0], v_adj_conj) * np.dot(self.D[0],  v) * self.aCD)
-        dv_adj = np.gradient(v_adj_conj) / np.gradient(self.y)
-        vv = v*v_adj_conj
-        d_vv = np.gradient(vv) / np.gradient(self.y)
-        dd_vv = np.gradient(d_vv) / np.gradient(self.y)
+            d_uv = np.gradient(v*u_adj_conj) / np.gradient(self.y)
 
-        Gu = (v_adj_conj * np.dot((self.D[1] - I*self.alpha**2),v) -
-              dd_vv - (i/self.alpha) * dv_adj * np.dot(self.D[0],  v) * self.aCD)
-        #Gu = np.dot(self.D[1],v*v_adj_conj)
-        #pdb.set_trace()
+            Gu = ((-i/self.alpha)*self.aCD*u*u_adj_conj*p +
+                    (i/self.alpha)*d_uv #np.dot(self.D[0], v*u_adj_conj)
+                    +v*v_adj_conj +u*u_adj_conj*p)
 
-        #Gu = (v_adj_conj * np.dot((self.D[1] - I*self.alpha**2),v)) -np.dot(self.D[1],v*v_adj_conj)
-        
-        '''
-        f_Gu = intp.interp1d(self.y, Gu)
-        Gu = f_Gu(self.y_new)
+            Gcd = (-(i*0.552)/self.alpha)*self.U*u*u_adj_conj*p 
 
-        #Gu = sig.savgol_filter(np.dot(self.D[0], v_adj_conj), 9,8)
-        #Gu = v*v_adj_conj#np.dot(self.D[0], v_adj_conj)
-        # pdb.set_trace()'''
 
         phase_Gu = np.arctan(np.imag(Gu)/np.real(Gu))
+        
+        mpl.rc('xtick', labelsize=15) 
+        mpl.rc('ytick', labelsize=15)
 
-
-        fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
-        lines = ay.plot(np.real(Gu), self.y, 'r', np.imag(Gu),
+        fig, (ay1, ay2) = plt.subplots(1,2, figsize=(10, 10), dpi=100)
+        lines = ay1.plot(np.real(Gu), self.y, 'r', np.imag(Gu),
                         self.y, 'g', np.abs(Gu), self.y, 'm', lw=2)
-        ay.set_ylabel(r'$y$', fontsize=32)
-        lgd = ay.legend((lines), (r'$Re$', r'$Im$'), loc=3,
-                                 ncol=2, bbox_to_anchor=(0, 1), fontsize=32)
-        ay.set_ylim([0,10])
-        ay.grid()
+        ay1.set_ylabel(r'$y$', fontsize=32)
+        ay1.set_xlabel(r'$G_U$', fontsize=32)        
+        lgd = ay1.legend((lines), (r'$Re$', r'$Im$', r'$Mod$' ), loc=3,
+                                 ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
+        ay1.set_ylim([0,5])
+        ay1.grid()
+
+        lines = ay2.plot(np.real(Gcd), self.y, 'r', np.imag(Gcd),
+                        self.y, 'g', np.abs(Gcd), self.y, 'm', lw=2)
+        ay2.set_ylabel(r'$y$', fontsize=32)
+        ay2.set_xlabel(r'$G_{CD}$', fontsize=32)        
+        ay2.grid()
+        ay2.set_ylim([0,5])
         plt.show(lines)
 
-        # pdb.set_trace()
+        d_p = np.gradient(p) / np.gradient(self.y)
 
-        Gcd = -(i/self.alpha)*np.dot(self.D[0], v_adj_conj) * np.dot(self.D[0],
-                v) * self.U * 0.552  # sarebbe a* da cambiare tutta
-        # l'intefaccia per separare CD ed aCD
-        '''
-        f_Gcd = intp.interp1d(self.y, Gcd)
-        Gcd = f_Gcd(self.y_new)
-        '''
-        '''fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
-        lines = ay.plot(np.real(Gcd), self.y_new, 'b', np.imag(Gcd),
-                        self.y_new, 'r', lw=2)
-        ay.set_ylabel(r'$y$', fontsize=32)
-        lgd = ay.legend((lines), (r'$Re$', r'$Im$'), loc=3,
-                                 ncol=2, bbox_to_anchor=(0, 1), fontsize=32)
-        ay.grid()
-        ay.set_ylim([0,5])
-        plt.show(lines)'''
-
-        delta_c = np.sum((Gu*self.delta_U)*self.integ_matrix)
-
+        delta_c = np.sum((Gu*self.delta_U)*self.integ_matrix)  # +((+i/self.alpha)*v_adj_conj*d_p)*self.integ_matrix)
+        #delta_c = np.sum((Gcd*self.delta_cd)*self.integ_matrix)
         #delta_c = (integ.trapz(Gu*self.delta_U, self.y_new) +
         #               integ.trapz(Gcd*self.delta_cd, self.y_new))
-        return delta_c
+        return -delta_c/normaliz
 
     def sens_spectrum(self, fig_name, per_variab='all', *args):
-        eps = 0.1
-        y0 = np.linspace(eps, 10-eps, 1000)
+        eps = 0.2
+        y0 = np.linspace(eps, 1-eps, 50)
         it = np.arange(len(y0))
         #pdb.set_trace()
         delta_spectrum = np.zeros(len(y0), dtype=np.complex_)
+        delta_spectrum_stab = np.zeros(len(y0), dtype=np.complex_)
+        
         for i in it:
             if per_variab == 'u':
                 #pdb.set_trace()
@@ -281,20 +301,29 @@ class sensitivity(object):
 
             #pdb.set_trace()
             delta_spectrum[i] = self.c_per()
+            delta_spectrum_stab[i] = self.validation(y0[i], 0.2, 17)
+            
             print y0[i],'  ', delta_spectrum[i]
 
         re = np.real(delta_spectrum) + np.real(self.eigv[self.idx])
         im = np.imag(delta_spectrum) + np.imag(self.eigv[self.idx])
 
+        re_stab = np.real(delta_spectrum_stab)
+        im_stab = np.imag(delta_spectrum_stab)
+
+
         fig, ay = plt.subplots(figsize=(20, 20), dpi=50)
         lines = ay.plot(re, im, 'ko', np.real(self.eigv[self.idx]),
-            np.imag(self.eigv[self.idx]), 'r*', markersize=20)
+            np.imag(self.eigv[self.idx]), 'r*', re_stab, im_stab, 'bo', markersize=20)
         ay.set_ylabel(r'$c_i$', fontsize=32)
         ay.set_xlabel(r'$c_r$', fontsize=32)
         #ay.set_ylim([0.08081, 0.0812])
         #ay.set_xlim([0.91551, 0.9158])
+        ay.grid()
         fig.savefig(fig_name, bbox_inches='tight', dpi=150)
         plt.show()
+
+
 
     def validation(self, pos, amp, eig_idx):
         """ check if the sensitivity of an eigenvalue is the same with the
@@ -315,12 +344,16 @@ class sensitivity(object):
 
         self.dU = self.dU + d_delta_U
         self.ddU = self.ddU + dd_delta_U
-        #self.ddU = sig.savgol_filter(self.ddU, 10, 2)
 
+        '''self.cd_pert(pos, amp)
 
+        self.aCD = self.aCD + self.delta_cd*0.552'''
+
+        mpl.rc('xtick', labelsize=40) 
+        mpl.rc('ytick', labelsize=40)
         # JUST A LITTLE VISUAL TEST TO SEE IF THE ADDITION OF
         # THE VELOCITY WORKS
-        fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
+        fig, ay = plt.subplots(figsize=(10, 10), dpi=100)
         lines = ay.plot(self.U, self.y, 'b', self.dU, self.y, 'g',
                         self.ddU, self.y, 'r', self.aCD, self.y, 'm',
                         self.daCD, self.y, 'c', lw=2)
@@ -343,8 +376,8 @@ class sensitivity(object):
         f.integ_matrix()
 
         #f.read_velocity_profile()
-        #f.mapping()
-        f.set_couette()
+        f.mapping()
+        #f.set_couette()
 
         f.y = self.y
         f.U = self.U
@@ -356,12 +389,12 @@ class sensitivity(object):
         f.set_operator_variables()
         f.solve_eig()
 
-        fig, ay = plt.subplots(figsize=(20, 20), dpi=50)
+        '''fig, ay = plt.subplots(figsize=(20, 20), dpi=50)
         lines = ay.plot(np.real(f.eigv),
             np.imag(f.eigv), 'r*', markersize=20)
         ay.set_ylabel(r'$c_i$', fontsize=32)
         ay.set_xlabel(r'$c_r$', fontsize=32)
-        plt.show()
+        plt.show()'''
 
         # remove the infinite and nan eigenvectors, and their eigenfunctions
         selector = np.isfinite(f.eigv)
@@ -376,3 +409,5 @@ class sensitivity(object):
 
         self.u_pert(pos, amp)
         print self.c_per()
+
+        return eigv_new

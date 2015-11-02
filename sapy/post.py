@@ -53,17 +53,21 @@ class viz(object):
 
     def plot_velocity(self):
         """plot the velocity profiles"""
-        fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
+        fig, ay = plt.subplots(figsize=(10, 10), dpi=100)
         lines = ay.plot(self.U, self.y, 'b', self.dU, self.y, 'g',
                         self.ddU, self.y, 'r', self.aCD, self.y, 'm',
                         self.daCD, self.y, 'c', lw=2)
+
+        mpl.rc('xtick', labelsize=40) 
+        mpl.rc('ytick', labelsize=40)
+
         ay.set_ylabel(r'$y$', fontsize=32)
         lgd = ay.legend((lines),
                         (r'$U$', r'$\partial U$',
                          r'$\partial^2 U$', r'$a^* C_D$',
                          r'$\partial a^* C_D$'),
                         loc=3, ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
-        # ay.set_ylim([0,5])
+        ay.set_ylim([0,5])
         # ax.set_xlim([np.min(time[2*T:3*T]),np.max(time[2*T:3*T])])
         ay.grid()
         # plt.tight_layout()
@@ -72,6 +76,8 @@ class viz(object):
         plt.show()
 
     def plot_spectrum(self):
+            mpl.rc('xtick', labelsize=20) 
+            mpl.rc('ytick', labelsize=20)
             """ plot the spectrum """
             self.eigv_re = np.real(self.eigv)
             self.eigv_im = np.imag(self.eigv)
@@ -80,15 +86,17 @@ class viz(object):
             self.eigv_im_adj = np.imag(self.eigv_adj)
 
             #  for i in np.arange(10):
-            self.fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
+            self.fig, ay = plt.subplots(figsize=(10, 10), dpi=100)
             plt.subplots_adjust(bottom=0.2)
             lines = ay.plot(self.eigv_re, self.eigv_im, 'bs', self.eigv_re_adj,
                     -self.eigv_im_adj, 'ro', markersize=10)
-            ay.set_ylabel(r'$c_i$', fontsize=32)
-            ay.set_xlabel(r'$c_r$', fontsize=32)
+            ay.set_ylabel(r'$c_i$', fontsize=35)
+            ay.set_xlabel(r'$c_r$', fontsize=35)
             # lgd = ay.legend((lines),(r'$U$',r'$\delta U$',r'$\delta^2 U$'),
             #                          loc=3, ncol=3, bbox_to_anchor=(0,1),
             #                          fontsize = 32)
+
+
             ay.set_xlim([0.4, 1.6])
             ay.set_ylim([-0.02, 0.28])
             ay.grid()
@@ -109,6 +117,9 @@ class viz(object):
             plt.show()
 
     def plot_eigf(self):
+            mpl.rc('xtick', labelsize=15) 
+            mpl.rc('ytick', labelsize=15)
+
 
             sel_eig = self.fig.ginput(2)
 
@@ -140,8 +151,9 @@ class viz(object):
                                   np.sqrt(u*np.conjugate(u)), self.y, 'm', lw=2)
                 ay2.set_ylabel(r'$y$', fontsize=32)
                 ay2.set_xlabel(r"$u$", fontsize=32)
-                # lgd = ay2.legend((lines2),(r'$Re$',r'$Im$',r'$Mod$'),
-                #               loc=3, ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
+
+                lgd = ay2.legend((lines2),(r'$Re$',r'$Im$',r'$Mod$'),
+                               loc=3, ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
                 ay2.set_ylim([0, 5])
                 # ay2.set_xlim([-1, 1])
                 ay2.grid()
@@ -150,6 +162,8 @@ class viz(object):
                                   np.sqrt(v*np.conjugate(v)), self.y, 'm', lw=2)
                 ay3.set_ylabel(r'$y$', fontsize=32)
                 ay3.set_xlabel(r"$v$", fontsize=32)
+
+
                 # lgd = ay3.legend((lines3),(r'$Re$',r'$Im$',r'$Mod$'), loc=3,
                 #                  ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
                 ay3.set_ylim([0, 5])
@@ -160,10 +174,12 @@ class viz(object):
                 lines4 = ay4.plot(np.real(self.eigf_adj[:, n]), self.y, 'r',
                         np.imag(self.eigf_adj[:, n]), self.y, 'g',
                         np.sqrt(u*np.conjugate(self.eigf_adj[:, n])), self.y, 'm', lw=2)
+
+
                 ay4.set_ylabel(r'$y$', fontsize=32)
                 ay4.set_xlabel(r"$v^\dagger$", fontsize=32)
-                # lgd = ay2.legend((lines2),(r'$Re$',r'$Im$',r'$Mod$'),
-                #               loc=3, ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
+                lgd = ay2.legend((lines2),(r'$Re$',r'$Im$',r'$Mod$'),
+                               loc=3, ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
                 ay4.set_ylim([0, 5])
                 # ay2.set_xlim([-1, 1])
                 ay4.grid()
@@ -178,6 +194,8 @@ class viz(object):
                 fig2, (ay1, ay2, ay3) = plt.subplots(1, 3)  # , dpi = 50)
                 lines1 = ay1.plot(np.real(p), self.y, 'r', np.imag(p), self.y, 'g',
                                   np.sqrt(p*np.conjugate(p)), self.y, 'm', lw=2)
+ 
+
                 ay1.set_ylabel(r'$y$', fontsize=32)
                 ay1.set_xlabel(r"$p$", fontsize=32)
                 lgd = ay1.legend((lines1), (r'$Re$', r'$Im$', r'$Mod$'), loc=3,
@@ -198,6 +216,8 @@ class viz(object):
 
                 lines3 = ay3.plot(np.real(v), self.y, 'r', np.imag(v), self.y, 'g',
                                   np.sqrt(v*np.conjugate(v)), self.y, 'm', lw=2)
+
+
                 ay3.set_ylabel(r'$y$', fontsize=32)
                 ay3.set_xlabel(r"$v$", fontsize=32)
                 # lgd = ay3.legend((lines3), (r'$Re$', r'$Im$', r'$Mod$'), loc=3,
@@ -215,9 +235,11 @@ class viz(object):
                 fig3, (ay4, ay5, ay6) = plt.subplots(1, 3)  # , dpi = 50)
                 lines4 = ay4.plot(np.real(p_adj), self.y, 'r', np.imag(p_adj), self.y, 'g',
                                   np.sqrt(p_adj*np.conjugate(p_adj)), self.y, 'm', lw=2)
+
+
                 ay4.set_ylabel(r'$y$', fontsize=32)
                 ay4.set_xlabel(r"$p^\dagger$", fontsize=32)
-                lgd = ay1.legend((lines4), (r'$Re$', r'$Im$', r'$Mod$'), loc=3,
+                lgd = ay4.legend((lines4), (r'$Re$', r'$Im$', r'$Mod$'), loc=3,
                                  ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
                 ay4.set_ylim([0, 5])
                 # ay1.set_xlim([-1, 1])
@@ -225,6 +247,8 @@ class viz(object):
 
                 lines5 = ay5.plot(np.real(u_adj), self.y, 'r', np.imag(u_adj), self.y, 'g',
                                   np.sqrt(u_adj*np.conjugate(u_adj)), self.y, 'm', lw=2)
+
+
                 ay5.set_ylabel(r'$y$', fontsize=32)
                 ay5.set_xlabel(r"$u^\dagger$", fontsize=32)
                 # lgd = ay2.legend((lines2), (r'$Re$', r'$Im$', r'$Mod$'), loc=3,
@@ -235,6 +259,8 @@ class viz(object):
 
                 lines6 = ay6.plot(np.real(v_adj), self.y, 'r', np.imag(v_adj), self.y, 'g',
                                   np.sqrt(v_adj*np.conjugate(v_adj)), self.y, 'm', lw=2)
+
+
                 ay6.set_ylabel(r'$y$', fontsize=32)
                 ay6.set_xlabel(r"$v^\dagger$", fontsize=32)
                 # lgd = ay3.legend((lines3), (r'$Re$', r'$Im$', r'$Mod$'), loc=3,
