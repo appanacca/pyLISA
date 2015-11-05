@@ -564,15 +564,54 @@ class fluid(object):
         ddU = np.matrix(np.diag(self.ddU))
 
         if method == 'cont':
-            self.C = (2 * dU * D1 + U*delta +
-                     ((i/self.alpha)*I)*D1*(CD*U*D1))
-                     #((i/self.alpha)*I)*(dCD*U*D1 + CD*dU*D1 + CD*U*D2))
-            self.E = delta
+            if self.option['variables'] == 'v_eta':
+                self.C = (2 * dU * D1 + U*delta +
+                        ((i/self.alpha)*I)*D1*(CD*U*D1))
+                        #((i/self.alpha)*I)*(dCD*U*D1 + CD*dU*D1 + CD*U*D2))
+                self.E = delta
 
-            """self.C = (-i/(self.alpha*self.Re)) *\
-                     (D4 +I*self.alpha**4 -2*self.alpha**2 *D2)\
-                    + 2*dU*D1 + U*delta
-            self.E = delta"""
+                """self.C = (-i/(self.alpha*self.Re)) *\
+                         (D4 +I*self.alpha**4 -2*self.alpha**2 *D2)\
+                        + 2*dU*D1 + U*delta
+                self.E = delta"""
+            elif self.option['variables'] == 'p_u_v':
+                # ----Matrix Construction-----------
+                #  p |u |v
+                # (       ) continuity
+                # (       ) x-momentum
+                # (       ) y-momentum
+
+                I = np.identity(self.N)
+                i = (0+1j)
+                delta = self.D[1] - self.alpha**2 * I
+
+                AA1 = np.zeros((self.N, self.N))
+                AA2 = I
+                AA3 = (i/self.alpha)*D1
+
+                AB1 = I
+                AB2 = U - (i/self.alpha)*U*CD
+                AB3 = np.zeros((self.N, self.N))
+
+                AC1 = (i/self.alpha)*D1
+                AC2 = -(i/self.alpha)*dU
+                AC3 = U
+
+                BA1 = BA2 = BA3 = BB1 = BB3 = BC1 = BC2 = np.zeros((self.N, self.N))
+                BB2 = BC3 = I
+
+                AA = np.concatenate((AA1, AA2, AA3), axis=1)
+                AB = np.concatenate((AB1, AB2, AB3), axis=1)
+                AC = np.concatenate((AC1, AC2, AC3), axis=1)
+
+                self.C = np.conjugate(np.concatenate((AA, AB, AC)))
+
+                BA = np.concatenate((BA1, BA2, BA3), axis=1)
+                BB = np.concatenate((BB1, BB2, BB3), axis=1)
+                BC = np.concatenate((BC1, BC2, BC3), axis=1)
+
+                self.E = np.concatenate((BA, BB, BC))
+
 
         elif method == 'disc':
             self.C = np.conjugate(np.transpose(self.A_noBC))

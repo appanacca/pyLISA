@@ -133,13 +133,13 @@ class sensitivity(object):
         mpl.rc('xtick', labelsize=25) 
         mpl.rc('ytick', labelsize=25)
 
-        fig, ay = plt.subplots(figsize=(10, 10), dpi=100)
+        """fig, ay = plt.subplots(figsize=(10, 10), dpi=100)
         lines = ay.plot(self.delta_U, self.y, 'b', lw=2)
         ay.set_ylabel(r'$y$', fontsize=32)
         ay.set_xlabel(r'$\delta U$', fontsize=32)        
         ay.set_ylim([0,5])
         ay.grid()
-        plt.show(lines)
+        plt.show(lines)"""
 
     """def cd_pert_sin(self):
         # distribution = per_heigth * (10**x / 1e100)
@@ -245,9 +245,9 @@ class sensitivity(object):
 
             Gu = ((-i/self.alpha)*self.aCD*u*u_adj_conj*p +
                     (i/self.alpha)*d_uv #np.dot(self.D[0], v*u_adj_conj)
-                    +v*v_adj_conj +u*u_adj_conj*p)
+                    +v*v_adj_conj +u*u_adj_conj*p)/normaliz
 
-            Gcd = (-(i*0.552)/self.alpha)*self.U*u*u_adj_conj*p 
+            Gcd = ((-(i*0.552)/self.alpha)*self.U*u*u_adj_conj*p)/normaliz
 
 
         phase_Gu = np.arctan(np.imag(Gu)/np.real(Gu))
@@ -255,7 +255,7 @@ class sensitivity(object):
         mpl.rc('xtick', labelsize=15) 
         mpl.rc('ytick', labelsize=15)
 
-        fig, (ay1, ay2) = plt.subplots(1,2, figsize=(10, 10), dpi=100)
+        """fig, (ay1, ay2) = plt.subplots(1,2, figsize=(10, 10), dpi=100)
         lines = ay1.plot(np.real(Gu), self.y, 'r', np.imag(Gu),
                         self.y, 'g', np.abs(Gu), self.y, 'm', lw=2)
         ay1.set_ylabel(r'$y$', fontsize=32)
@@ -271,15 +271,13 @@ class sensitivity(object):
         ay2.set_xlabel(r'$G_{CD}$', fontsize=32)        
         ay2.grid()
         ay2.set_ylim([0,5])
-        plt.show(lines)
+        plt.show(lines)"""
 
-        d_p = np.gradient(p) / np.gradient(self.y)
-
-        delta_c = np.sum((Gu*self.delta_U)*self.integ_matrix)  # +((+i/self.alpha)*v_adj_conj*d_p)*self.integ_matrix)
-        #delta_c = np.sum((Gcd*self.delta_cd)*self.integ_matrix)
+        #delta_c = np.sum((Gu*self.delta_U)*self.integ_matrix)  # +((+i/self.alpha)*v_adj_conj*d_p)*self.integ_matrix)
+        delta_c = np.sum((Gcd*self.delta_cd)*self.integ_matrix)
         #delta_c = (integ.trapz(Gu*self.delta_U, self.y_new) +
         #               integ.trapz(Gcd*self.delta_cd, self.y_new))
-        return -delta_c/normaliz
+        return delta_c
 
     def sens_spectrum(self, fig_name, per_variab='all', *args):
         eps = 0.2
@@ -353,7 +351,7 @@ class sensitivity(object):
         mpl.rc('ytick', labelsize=40)
         # JUST A LITTLE VISUAL TEST TO SEE IF THE ADDITION OF
         # THE VELOCITY WORKS
-        fig, ay = plt.subplots(figsize=(10, 10), dpi=100)
+        """fig, ay = plt.subplots(figsize=(10, 10), dpi=100)
         lines = ay.plot(self.U, self.y, 'b', self.dU, self.y, 'g',
                         self.ddU, self.y, 'r', self.aCD, self.y, 'm',
                         self.daCD, self.y, 'c', lw=2)
@@ -365,7 +363,7 @@ class sensitivity(object):
                         loc=3, ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
         ay.set_ylim([0,5])
         ay.grid()
-        plt.show()
+        plt.show()"""
 
         dic = dict(zip(self.sim_param_keys, self.sim_param_values))
         f = sa.fluid(dic)

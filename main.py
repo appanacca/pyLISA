@@ -33,27 +33,27 @@ f.interpolate()
 f.set_operator_variables()
 
 f.solve_eig()
-f.adjoint_spectrum_v_eta('disc')
+f.adjoint_spectrum_v_eta('cont')
 f.solve_eig_adj()
 
-f.save_sim('200_ve_cont')
+f.save_sim('200_puv_cont')
 #f.check_adj()
 
 
 
 
-v = po.viz('200_ve_cont.npz')
+v = po.viz('200_puv_cont.npz')
 v.plot_velocity()
 v.plot_spectrum()
 # f.omega_alpha_curves(0.0001,2,5
 
-om = sn.sensitivity(0.01, '200_ve_cont.npz', 17)
+om = sn.sensitivity(0.01, '200_puv_cont.npz', 17)
 #om.u_pert(0.4, 0.2)
 #om.cd_pert(0.5, 0.1)
 #om.c_per()
 
-#om.sens_spectrum('ke_u_N01_ve.png', per_variab='u')
-om.validation(0.7, 0.2, 17)
+om.sens_spectrum('ke_cd_N001_puv.png', per_variab='cd')
+#om.validation(0.7, 0.2, 17)
 
 
 
