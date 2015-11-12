@@ -243,16 +243,16 @@ class sensitivity(object):
 
             d_uv = np.gradient(v*u_adj_conj) / np.gradient(self.y)
 
-            Gu = ((-i/self.alpha)*self.aCD*u*u_adj_conj*p +
+            Gu = ((-i/self.alpha)*self.aCD*u*u_adj_conj +
                     (i/self.alpha)*d_uv #np.dot(self.D[0], v*u_adj_conj)
-                    +v*v_adj_conj +u*u_adj_conj*p)/normaliz
+                    +v*v_adj_conj +u*u_adj_conj)/normaliz
 
-            Gcd = ((-(i*0.552)/self.alpha)*self.U*u*u_adj_conj*p)/normaliz
+            Gcd = ((-(i*0.552)/self.alpha)*self.U*u*u_adj_conj)/normaliz
 
 
         phase_Gu = np.arctan(np.imag(Gu)/np.real(Gu))
-        
-        mpl.rc('xtick', labelsize=15) 
+
+        mpl.rc('xtick', labelsize=15)
         mpl.rc('ytick', labelsize=15)
 
         """fig, (ay1, ay2) = plt.subplots(1,2, figsize=(10, 10), dpi=100)
@@ -329,23 +329,16 @@ class sensitivity(object):
         plus the random perturbation:
             dc = c(U+dU) - c(U) = dc(adjoint) """
 
-        self.u_pert(pos, amp)  # call the perturbation creator
-        f_u = intp.interp1d(self.y_new, self.delta_U)
-        self.delta_U = f_u(self.y)
-
-
+        """self.u_pert(pos, amp)  # call the perturbation creator
         self.U = self.U + self.delta_U
         # after the u_pert() call the self.delta_U property is accessible
-
         d_delta_U =  np.gradient(self.delta_U) / np.gradient(self.y)
         dd_delta_U = np.gradient(d_delta_U) / np.gradient(self.y)
-
         self.dU = self.dU + d_delta_U
-        self.ddU = self.ddU + dd_delta_U
+        self.ddU = self.ddU + dd_delta_U"""
 
-        '''self.cd_pert(pos, amp)
-
-        self.aCD = self.aCD + self.delta_cd*0.552'''
+        self.cd_pert(pos, amp)
+        self.aCD = self.aCD + self.delta_cd
 
         mpl.rc('xtick', labelsize=40) 
         mpl.rc('ytick', labelsize=40)
