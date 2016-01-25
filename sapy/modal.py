@@ -182,6 +182,16 @@ class fluid(object):
             xi[:, 2] = 6*a*(b + 1)/(b - self.y)**4
             xi[:, 3] = 24*a*(b + 1)/(b - self.y)**5
 
+        elif self.option['mapping'][0] == 'semi_infinite_ZA':
+            ymax = self.option['Ymax']
+            self.y = (-ymax/2)*(-1 -self.y)
+
+            xi = np.zeros((self.N, 4))
+            xi[:, 0] = np.ones(len(self.y))*(2/ymax)
+            xi[:, 1] = np.zeros(len(self.y))
+            xi[:, 2] = np.zeros(len(self.y))
+            xi[:, 3] = np.zeros(len(self.y))
+
         elif self.option['mapping'][0] == 'infinite':
             L = 10
             s_inf = 20
@@ -464,7 +474,7 @@ class fluid(object):
 
         self.A_noBC = np.copy(self.A)
         self.B_noBC = np.copy(self.B)
-       
+
         if self.option['equation'] == 'Euler':
             self.BC_LNS_neu_v()
         elif self.option['equation'] == 'Euler_wave':
@@ -648,13 +658,13 @@ class fluid(object):
             self.C[-1, -1] = 1
             self.E[-1, :] = self.C[-1, :]*eps
 
-            """# v'(inf) = 0
+            # v'(inf) = 0
             self.C[1, :] = self.D[0][0, :]
             self.E[1, :] = self.C[1, :]*eps
 
             # v'(0) = 0
             self.C[-2, :] = self.D[0][-1, :]
-            self.E[-2, :] = self.C[-2, :]*eps"""
+            self.E[-2, :] = self.C[-2, :]*eps
 
         elif self.option['variables'] == 'p_u_v':
 
@@ -681,7 +691,7 @@ class fluid(object):
 
 
 
-        
+
 
     @nb.jit
     def omega_alpha_curves(self, alpha_start, alpha_end, n_step):

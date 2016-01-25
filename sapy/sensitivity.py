@@ -39,7 +39,7 @@ class sensitivity(object):
     """ these class compute the sensitivity of the spectrum
     due to changes in the velocity profile or the drag coefficient"""
 
-    def __init__(self, max_norm, in_data, idx, per_U_heigth=5, per_cd_heigth=1, *args):
+    def __init__(self, in_data, idx, per_U_heigth=5, per_cd_heigth=1, *args):
         # here above, eps is the maximum norm of the disturb
 
         # as input needs the in_data.npz with the simulation results
@@ -72,122 +72,58 @@ class sensitivity(object):
         # that will be the wave number of the sinusoidal perturbation
         # is it possible to change the associated probability
 
-        self.max_norm = max_norm
         self.per_U_heigth = per_U_heigth
         self.per_cd_heigth = per_cd_heigth
 
-        # pdb.set_trace()
-        #self.y_new = np.concatenate((np.linspace(0, 10, 10000),
-        #                             np.linspace(10.001, self.y[0],1000)))
-        '''
-        f_U = intp.interp1d(self.y, self.U)
-        self.U = f_U(self.y_new)
-        f_dU = intp.interp1d(self.y, self.dU)
-        self.dU = f_dU(self.y_new)
-        f_ddU = intp.interp1d(self.y, self.ddU)
-        self.ddU = f_ddU(self.y_new)'''
-
-        self.y_new = self.y
-
-
         # initialize default perturbation of U and Cd as zeros
-        self.delta_U = np.zeros(len(self.y_new))
-        self.delta_cd = np.zeros(len(self.y_new))
+        self.perturb = np.zeros(len(self.y))
 
         self.sim_param_values = data['sim_param_values']
         self.sim_param_keys = data['sim_param_keys']
 
+    def get_perturbation(self, y0, eps, gamma, shape='gauss', *args):
+        if shape == 'cos':
+            ky = np.pi / gamma
 
-    """def u_pert_sin(self):
-        # distribution = per_heigth * (10**x / 1e100)
-        ky = rnd.choice(self.distribution_ky)
-        self.delta_U = np.sin((2*np.pi)/ky * self.y[self.y <= self.per_U_heigth])
-        norm = lin.norm(self.delta_U)
-        eps = rnd.choice(self.distribution_eps)
-        self.delta_U = eps/(norm) * self.delta_U
-        n_tmp = self.N - len(self.delta_U)
-        self.delta_U = np.concatenate((np.zeros(n_tmp), self.delta_U))
-        # print ky, eps
+            self.perturb = np.zeros(len(self.y))
+            self.perturb[(self.y> y0-gamma) & (self.y < y0+gamma)] = (1 +
+                    np.cos(ky*(self.y[(self.y > y0-gamma) & (self.y <
+                        y0+gamma)]-y0)))
 
-        '''fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
-        lines = ay.plot(self.delta_U, self.y, 'b', lw=2)
-        ay.set_ylabel(r'$y$', fontsize=32)
-        ay.grid()
-        plt.show(lines)''' """
+            norm_st = lin.norm(self.perturb)
 
-    def u_pert(self, y0, eps):
-        ky = np.pi / eps
+            a = eps / norm_st
 
-        self.delta_U = np.zeros(len(self.y_new))
-        self.delta_U[(self.y_new> y0-eps) & (self.y_new < y0+eps)] = (1 +
-                np.cos(ky*(self.y_new[(self.y_new > y0-eps) & (self.y_new < y0+eps)]-y0)))
+            self.perturb[(self.y > y0-gamma) & (self.y < y0+gamma)] = a*(1 +
+                    np.cos(ky*(self.y[(self.y > y0-gamma) & (self.y <
+                        y0+gamma)]-y0)))
 
-        norm_st = lin.norm(self.delta_U)
+        elif shape == 'gauss':
+            self.perturb = np.zeros(len(self.y))
+            self.perturb = np.exp((-(self.y - y0)**2)/gamma)
 
-        a = self.max_norm / norm_st
+            norm_st = lin.norm(self.perturb)
 
-        self.delta_U[(self.y_new > y0-eps) & (self.y_new < y0+eps)] = a*(1 +
-                np.cos(ky*(self.y_new[(self.y_new > y0-eps) & (self.y_new < y0+eps)]-y0)))
+            a = eps / norm_st
+            self.perturb = a*np.exp((-(self.y - y0)**2)/gamma)
 
-        # print lin.norm(self.delta_U)
-        mpl.rc('xtick', labelsize=25) 
+        mpl.rc('xtick', labelsize=25)
         mpl.rc('ytick', labelsize=25)
 
-        """fig, ay = plt.subplots(figsize=(10, 10), dpi=100)
-        lines = ay.plot(self.delta_U, self.y, 'b', lw=2)
+        '''fig, ay = plt.subplots(figsize=(10, 10), dpi=100)
+        lines = ay.plot(self.perturb, self.y, 'b*', lw=2)
         ay.set_ylabel(r'$y$', fontsize=32)
-        ay.set_xlabel(r'$\delta U$', fontsize=32)        
+        ay.set_xlabel(r'$\delta U$', fontsize=32)
         ay.set_ylim([0,5])
-        ay.grid()
-        plt.show(lines)"""
-
-    """def cd_pert_sin(self):
-        # distribution = per_heigth * (10**x / 1e100)
-        ky = rnd.choice(self.distribution_ky)
-        self.delta_cd = np.sin((2*np.pi)/ky * self.y[self.y <= self.per_cd_heigth])
-        norm = lin.norm(self.delta_cd)
-        eps = rnd.choice(self.distribution_eps)
-        self.delta_cd = eps/(norm) * self.delta_cd
-        n_tmp = self.N - len(self.delta_cd)
-        self.delta_cd = np.concatenate((np.zeros(n_tmp), self.delta_cd))
-        # print ky, eps
-
-        '''fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
-        lines = ay.plot(self.delta_cd, self.y, 'b', lw=2)
-        ay.set_ylabel(r'$y$', fontsize=32)
-        ay.grid()
-        plt.show(lines)''' """
-
-    def cd_pert(self, y0, eps):
-        ky = np.pi / eps
-
-        self.delta_cd = np.zeros(len(self.y_new))
-        self.delta_cd[(self.y_new > y0-eps) & (self.y_new < y0+eps)] = (1 +
-                np.cos(ky*(self.y_new[(self.y_new > y0-eps) & (self.y_new < y0+eps)]-y0)))
-
-        norm_st = lin.norm(self.delta_cd)
-
-        a = self.max_norm / norm_st
-
-        self.delta_cd[(self.y_new > y0-eps) & (self.y_new < y0+eps)] = a*(1 +
-                np.cos(ky*(self.y_new[(self.y_new > y0-eps) & (self.y_new < y0+eps)]-y0)))
-
-        # print lin.norm(self.delta_U)
-
-        '''fig, ay = plt.subplots(figsize=(10, 10), dpi=50)
-        lines = ay.plot(self.delta_cd, self.y_new, 'b', lw=2)
-        ay.set_ylabel(r'$y$', fontsize=32)
-        ay.set_ylim([0,1.5])
         ay.grid()
         plt.show(lines)'''
 
-
-    def c_per(self):
+    def c_per(self, obj='u', *args):
         i = (0 + 1j)
         if self.option['variables'] == 'v_eta':
             v = self.eigf[:, self.idx]
             v_adj = self.eigf_adj[:, self.idx]
-            
+
             v_adj_conj = np.conjugate(v_adj)
 
             f_norm = (v_adj_conj * np.dot((self.D[1] - self.alpha**2),v))
@@ -212,8 +148,6 @@ class sensitivity(object):
 
             Gu = (v_adj_conj * np.dot((self.D[1] - I*self.alpha**2),v) -
                   dd_vv - (i/self.alpha) * dv_adj * np.dot(self.D[0],  v) * self.aCD)
-            #Gu = np.dot(self.D[1],v*v_adj_conj)
-            #pdb.set_trace()
 
             #Gu = (v_adj_conj * np.dot((self.D[1] - I*self.alpha**2),v)) -np.dot(self.D[1],v*v_adj_conj)
 
@@ -259,7 +193,7 @@ class sensitivity(object):
         lines = ay1.plot(np.real(Gu), self.y, 'r', np.imag(Gu),
                         self.y, 'g', np.abs(Gu), self.y, 'm', lw=2)
         ay1.set_ylabel(r'$y$', fontsize=32)
-        ay1.set_xlabel(r'$G_U$', fontsize=32)        
+        ay1.set_xlabel(r'$G_U$', fontsize=32)
         lgd = ay1.legend((lines), (r'$Re$', r'$Im$', r'$Mod$' ), loc=3,
                                  ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
         ay1.set_ylim([0,5])
@@ -268,40 +202,33 @@ class sensitivity(object):
         lines = ay2.plot(np.real(Gcd), self.y, 'r', np.imag(Gcd),
                         self.y, 'g', np.abs(Gcd), self.y, 'm', lw=2)
         ay2.set_ylabel(r'$y$', fontsize=32)
-        ay2.set_xlabel(r'$G_{CD}$', fontsize=32)        
+        ay2.set_xlabel(r'$G_{CD}$', fontsize=32)
         ay2.grid()
         ay2.set_ylim([0,5])
         plt.show(lines)"""
 
-        #delta_c = np.sum((Gu*self.delta_U)*self.integ_matrix)  # +((+i/self.alpha)*v_adj_conj*d_p)*self.integ_matrix)
-        delta_c = np.sum((Gcd*self.delta_cd)*self.integ_matrix)
-        #delta_c = (integ.trapz(Gu*self.delta_U, self.y_new) +
-        #               integ.trapz(Gcd*self.delta_cd, self.y_new))
+        if obj == 'u':
+            delta_c = np.sum((Gu*self.perturb)*self.integ_matrix)  # +((+i/self.alpha)*v_adj_conj*d_p)*self.integ_matrix)
+        elif obj == 'cd':
+            delta_c = np.sum((Gcd*self.perturb)*self.integ_matrix)
+        elif obj == 'all':
+            delta_c = np.sum((Gu*self.perturb)*self.integ_matrix) + np.sum((Gcd*self.perturb)*self.integ_matrix)
         return delta_c
 
-    def sens_spectrum(self, fig_name, per_variab='all', *args):
-        eps = 0.2
-        y0 = np.linspace(eps, 1-eps, 50)
+    def sens_spectrum(self, fig_name, eps=0.00001, gamma=0.007, obj='u', *args):
+        y0 = np.linspace(gamma, 1.5-gamma, 50)
         it = np.arange(len(y0))
         #pdb.set_trace()
         delta_spectrum = np.zeros(len(y0), dtype=np.complex_)
         delta_spectrum_stab = np.zeros(len(y0), dtype=np.complex_)
-        
-        for i in it:
-            if per_variab == 'u':
-                #pdb.set_trace()
-                self.u_pert(y0[i], eps)
-            elif per_variab == 'cd':
-                self.cd_pert(y0[i], eps)
-            elif per_variab == 'all':
-                self.u_pert(y0[i], eps)
-                self.cd_pert(y0[i], eps)
 
+        for i in it:
+            self.get_perturbation(y0[i], eps, gamma)
             #pdb.set_trace()
-            delta_spectrum[i] = self.c_per()
-            delta_spectrum_stab[i] = self.validation(y0[i], 0.2, 17)
-            
-            print y0[i],'  ', delta_spectrum[i]
+            delta_spectrum[i] = self.c_per(obj)
+            delta_spectrum_stab[i] = self.validation(y0[i], eps, gamma, 17)
+
+            print 'perturbation centre: ', y0[i]
 
         re = np.real(delta_spectrum) + np.real(self.eigv[self.idx])
         im = np.imag(delta_spectrum) + np.imag(self.eigv[self.idx])
@@ -321,26 +248,24 @@ class sensitivity(object):
         fig.savefig(fig_name, bbox_inches='tight', dpi=150)
         plt.show()
 
-
-
-    def validation(self, pos, amp, eig_idx):
+    def validation(self, pos, amp, gamma, eig_idx):
         """ check if the sensitivity of an eigenvalue is the same with the
         adjoint procedure, or with a simple superposition of the base flow
         plus the random perturbation:
             dc = c(U+dU) - c(U) = dc(adjoint) """
 
-        """self.u_pert(pos, amp)  # call the perturbation creator
-        self.U = self.U + self.delta_U
+        self.get_perturbation(pos, amp, gamma)  # call the perturbation creator
+        self.U = self.U + self.perturb
         # after the u_pert() call the self.delta_U property is accessible
-        d_delta_U =  np.gradient(self.delta_U) / np.gradient(self.y)
+        d_delta_U = np.gradient(self.perturb) / np.gradient(self.y)
         dd_delta_U = np.gradient(d_delta_U) / np.gradient(self.y)
         self.dU = self.dU + d_delta_U
-        self.ddU = self.ddU + dd_delta_U"""
+        self.ddU = self.ddU + dd_delta_U
 
-        self.cd_pert(pos, amp)
-        self.aCD = self.aCD + self.delta_cd
+        """self.cd_pert(pos, amp)
+        self.aCD = self.aCD + self.delta_cd"""
 
-        mpl.rc('xtick', labelsize=40) 
+        mpl.rc('xtick', labelsize=40)
         mpl.rc('ytick', labelsize=40)
         # JUST A LITTLE VISUAL TEST TO SEE IF THE ADDITION OF
         # THE VELOCITY WORKS
@@ -366,9 +291,7 @@ class sensitivity(object):
         f.diff_matrix()
         f.integ_matrix()
 
-        #f.read_velocity_profile()
         f.mapping()
-        #f.set_couette()
 
         f.y = self.y
         f.U = self.U
@@ -393,12 +316,12 @@ class sensitivity(object):
         eigv_im = np.imag(f.eigv)
         idx_new = np.argmax(eigv_im)
         eigv_new = f.eigv[idx_new]
-        
+
         print 'new:', eigv_new
         print 'old:', self.eigv[eig_idx]
         print 'diff:', eigv_new-self.eigv[eig_idx]
 
-        self.u_pert(pos, amp)
-        print self.c_per()
+        self.get_perturbation(pos, amp, gamma)
+        print 'adj:', self.c_per()
 
         return eigv_new

@@ -54,7 +54,7 @@ class viz(object):
     def plot_velocity(self):
         """plot the velocity profiles"""
         fig, ay = plt.subplots(figsize=(10, 10), dpi=100)
-        lines = ay.plot(self.U, self.y, 'b', self.dU, self.y, 'g',
+        lines = ay.plot(self.U, self.y, 'b+', self.dU, self.y, 'g',
                         self.ddU, self.y, 'r', self.aCD, self.y, 'm',
                         self.daCD, self.y, 'c', lw=2)
 

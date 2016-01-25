@@ -8,7 +8,7 @@ def cheb4c(N):
 	n2 = int(round(N/2. -1))  # Indices used for flipping trick
 
 	k = np.arange(N)  # Compute theta vector
-	k = k[1:N-1]	
+	k = k[1:N-1]
 	th = k*np.pi/(N-1)
 
 
