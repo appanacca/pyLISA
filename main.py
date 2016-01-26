@@ -4,7 +4,7 @@ import sapy.sensitivity as sn
 import pdb as pdb
 
 option = {'flow': 'DATA/G.txt',
-          'n_points': 400,
+          'n_points': 200,
           'lc': 0.16739,
           'Ymax': 1000,
           'yi': 10,
@@ -16,7 +16,7 @@ option = {'flow': 'DATA/G.txt',
           'Froude': 0.02,
           'slope': 1.3e-5}
 
-
+"""
 f = sa.fluid(option)
 
 f.diff_matrix()
@@ -43,20 +43,20 @@ f.save_sim('200_puv_disc')
 
 
 
-
 v = po.viz('200_puv_disc.npz')
 v.plot_velocity()
 v.plot_spectrum()
 # f.omega_alpha_curves(0.0001,2,5
 """
+
 om = sn.sensitivity('200_puv_disc.npz', 17)
 #om.u_pert(0.4, 0.2)
 #om.cd_pert(0.5, 0.1)
 #om.c_per()
 
-om.sens_spectrum('ke_cd_N001_puv.png', 1e-6, 1e-6, obj='u')
-#om.validation(1, 0.000001, 0.000001, 17)
-"""
+#om.sens_spectrum('ke_cd_N001_puv.png', 1e-3, 1e-2, obj='u', shape='sin') # eps, gamma
+om.validation(1, 1e-2, 1, 17, 'tanh')
+
 
 
 

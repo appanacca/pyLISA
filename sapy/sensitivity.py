@@ -82,7 +82,7 @@ class sensitivity(object):
         self.sim_param_keys = data['sim_param_keys']
 
     def get_perturbation(self, y0, eps, gamma, shape='gauss', *args):
-        if shape == 'cos':
+        if shape == 'cos': #`è in realtà un coseno ma alla "Gauss" è concentrato intorno ad un y0
             ky = np.pi / gamma
 
             self.perturb = np.zeros(len(self.y))
@@ -91,32 +91,73 @@ class sensitivity(object):
                         y0+gamma)]-y0)))
 
             norm_st = lin.norm(self.perturb)
+            a = eps / norm_st
+            self.perturb[(self.y > y0-gamma) & (self.y < y0+gamma)] = a*(1 +
+                        np.cos(ky*(self.y[(self.y > y0-gamma) & (self.y <
+                            y0+gamma)]-y0)))
 
+        elif shape == 'sin':
+            ky = np.pi / gamma
+            self.perturb = np.zeros(len(self.y))
+            self.perturb[(self.y> y0-gamma) & (self.y < y0+gamma)] = np.sin(ky*(self.y[(self.y > y0-gamma) & (self.y <
+                    y0+gamma)]-y0))
+            norm_st = lin.norm(self.perturb)
             a = eps / norm_st
 
-            self.perturb[(self.y > y0-gamma) & (self.y < y0+gamma)] = a*(1 +
-                    np.cos(ky*(self.y[(self.y > y0-gamma) & (self.y <
-                        y0+gamma)]-y0)))
+            self.perturb[(self.y > y0-gamma) & (self.y < y0+gamma)] = a*self.perturb[(self.y > y0-gamma) & (self.y < y0+gamma)]
+
+        elif shape == 'p1':
+            ky = gamma
+            self.perturb = np.zeros(len(self.y))
+            self.perturb[(self.y> y0-gamma) & (self.y < y0+gamma)] = ky*self.y[(self.y> y0-gamma) & (self.y < y0+gamma)]
+            norm_st = lin.norm(self.perturb)
+            a = eps / norm_st
+            self.perturb[(self.y > y0-gamma) & (self.y < y0+gamma)] = a*self.perturb[(self.y > y0-gamma) & (self.y < y0+gamma)]
+
+        elif shape == 'p2':
+            ky = gamma
+            self.perturb = np.zeros(len(self.y))
+            self.perturb[(self.y> y0-gamma) & (self.y < y0+gamma)] = ky*(self.y[(self.y> y0-gamma) & (self.y < y0+gamma)])**2
+            norm_st = lin.norm(self.perturb)
+            a = eps / norm_st
+            self.perturb[(self.y > y0-gamma) & (self.y < y0+gamma)] = a*self.perturb[(self.y > y0-gamma) & (self.y < y0+gamma)]
+
+        elif shape == 'p3':
+                ky = gamma
+                self.perturb = np.zeros(len(self.y))
+                self.perturb[(self.y> y0-gamma) & (self.y < y0+gamma)] = ky*(self.y[(self.y> y0-gamma) & (self.y < y0+gamma)])**3
+                norm_st = lin.norm(self.perturb)
+                a = eps / norm_st
+                self.perturb[(self.y > y0-gamma) & (self.y < y0+gamma)] = a*self.perturb[(self.y > y0-gamma) & (self.y < y0+gamma)]
+
+        elif shape == 'tanh':
+            ky = gamma
+            self.perturb = np.zeros(len(self.y))
+            self.perturb[(self.y> y0-gamma) & (self.y < y0+gamma)] = np.tanh(self.y[(self.y> y0-gamma) & (self.y < y0+gamma)])
+            norm_st = lin.norm(self.perturb)
+            a = eps / norm_st
+            self.perturb[(self.y > y0-gamma) & (self.y < y0+gamma)] = a*self.perturb[(self.y > y0-gamma) & (self.y < y0+gamma)]
+
 
         elif shape == 'gauss':
-            self.perturb = np.zeros(len(self.y))
-            self.perturb = np.exp((-(self.y - y0)**2)/gamma)
+                self.perturb = np.zeros(len(self.y))
+                self.perturb = np.exp((-(self.y - y0)**2)/gamma)
 
-            norm_st = lin.norm(self.perturb)
+                norm_st = lin.norm(self.perturb)
 
-            a = eps / norm_st
-            self.perturb = a*np.exp((-(self.y - y0)**2)/gamma)
+                a = eps / norm_st
+                self.perturb = a*np.exp((-(self.y - y0)**2)/gamma)
 
         mpl.rc('xtick', labelsize=25)
         mpl.rc('ytick', labelsize=25)
 
-        '''fig, ay = plt.subplots(figsize=(10, 10), dpi=100)
+        fig, ay = plt.subplots(figsize=(10, 10), dpi=100)
         lines = ay.plot(self.perturb, self.y, 'b*', lw=2)
         ay.set_ylabel(r'$y$', fontsize=32)
         ay.set_xlabel(r'$\delta U$', fontsize=32)
         ay.set_ylim([0,5])
         ay.grid()
-        plt.show(lines)'''
+        plt.show(lines)
 
     def c_per(self, obj='u', *args):
         i = (0 + 1j)
@@ -215,7 +256,7 @@ class sensitivity(object):
             delta_c = np.sum((Gu*self.perturb)*self.integ_matrix) + np.sum((Gcd*self.perturb)*self.integ_matrix)
         return delta_c
 
-    def sens_spectrum(self, fig_name, eps=0.00001, gamma=0.007, obj='u', *args):
+    def sens_spectrum(self, fig_name, eps=0.00001, gamma=0.007, obj='u',  shape='gauss', *args):
         y0 = np.linspace(gamma, 1.5-gamma, 50)
         it = np.arange(len(y0))
         #pdb.set_trace()
@@ -223,7 +264,7 @@ class sensitivity(object):
         delta_spectrum_stab = np.zeros(len(y0), dtype=np.complex_)
 
         for i in it:
-            self.get_perturbation(y0[i], eps, gamma)
+            self.get_perturbation(y0[i], eps, gamma, shape)
             #pdb.set_trace()
             delta_spectrum[i] = self.c_per(obj)
             delta_spectrum_stab[i] = self.validation(y0[i], eps, gamma, 17)
@@ -248,13 +289,13 @@ class sensitivity(object):
         fig.savefig(fig_name, bbox_inches='tight', dpi=150)
         plt.show()
 
-    def validation(self, pos, amp, gamma, eig_idx):
+    def validation(self, pos, amp, gamma, eig_idx, shape):
         """ check if the sensitivity of an eigenvalue is the same with the
         adjoint procedure, or with a simple superposition of the base flow
         plus the random perturbation:
             dc = c(U+dU) - c(U) = dc(adjoint) """
 
-        self.get_perturbation(pos, amp, gamma)  # call the perturbation creator
+        self.get_perturbation(pos, amp, gamma, shape)  # call the perturbation creator
         self.U = self.U + self.perturb
         # after the u_pert() call the self.delta_U property is accessible
         d_delta_U = np.gradient(self.perturb) / np.gradient(self.y)
@@ -321,7 +362,8 @@ class sensitivity(object):
         print 'old:', self.eigv[eig_idx]
         print 'diff:', eigv_new-self.eigv[eig_idx]
 
-        self.get_perturbation(pos, amp, gamma)
+        #self.get_perturbation(pos, amp, gamma)
         print 'adj:', self.c_per()
+        print 'diff %', np.real((eigv_new-self.eigv[eig_idx]) -self.c_per())/np.real(self.c_per()) *100, np.imag((eigv_new-self.eigv[eig_idx]) -self.c_per())/np.imag(self.c_per()) *100
 
         return eigv_new
