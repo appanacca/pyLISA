@@ -58,7 +58,7 @@ class viz(object):
                         self.ddU, self.y, 'r', self.aCD, self.y, 'm',
                         self.daCD, self.y, 'c', lw=2)
 
-        mpl.rc('xtick', labelsize=40) 
+        mpl.rc('xtick', labelsize=40)
         mpl.rc('ytick', labelsize=40)
 
         ay.set_ylabel(r'$y$', fontsize=32)
@@ -76,7 +76,7 @@ class viz(object):
         plt.show()
 
     def plot_spectrum(self):
-            mpl.rc('xtick', labelsize=20) 
+            mpl.rc('xtick', labelsize=20)
             mpl.rc('ytick', labelsize=20)
             """ plot the spectrum """
             self.eigv_re = np.real(self.eigv)
@@ -86,7 +86,7 @@ class viz(object):
             self.eigv_im_adj = np.imag(self.eigv_adj)
 
             #  for i in np.arange(10):
-            self.fig, ay = plt.subplots(figsize=(10, 10), dpi=100)
+            self.fig, ay = plt.subplots(figsize=(10, 6), dpi=100)
             plt.subplots_adjust(bottom=0.2)
             lines = ay.plot(self.eigv_re, self.eigv_im, 'bs', self.eigv_re_adj,
                     -self.eigv_im_adj, 'ro', markersize=10)
@@ -117,7 +117,7 @@ class viz(object):
             plt.show()
 
     def plot_eigf(self):
-            mpl.rc('xtick', labelsize=15) 
+            mpl.rc('xtick', labelsize=15)
             mpl.rc('ytick', labelsize=15)
 
 
@@ -194,7 +194,7 @@ class viz(object):
                 fig2, (ay1, ay2, ay3) = plt.subplots(1, 3)  # , dpi = 50)
                 lines1 = ay1.plot(np.real(p), self.y, 'r', np.imag(p), self.y, 'g',
                                   np.sqrt(p*np.conjugate(p)), self.y, 'm', lw=2)
- 
+
 
                 ay1.set_ylabel(r'$y$', fontsize=32)
                 ay1.set_xlabel(r"$p$", fontsize=32)

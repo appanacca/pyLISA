@@ -393,9 +393,9 @@ class fluid(object):
         # doesent work ARPACK problems with Arnoldi factorization
 
         # remove the infinite and nan eigenvectors, and their eigenfunctions
-        # selector = np.isfinite(self.eigv)
-        # self.eigv = self.eigv[selector]
-        # self.eigf = self.eigf[:, selector]
+        selector = np.isfinite(self.eigv)
+        self.eigv = self.eigv[selector]
+        self.eigf = self.eigf[:, selector]
 
     def LNS_operator(self):
         # ----Matrix Construction-----------
@@ -685,9 +685,9 @@ class fluid(object):
         # doesent work ARPACK problems with Arnoldi factorization
 
         # remove the infinite and nan eigenvectors, and their eigenfunctions
-        # selector = np.isfinite(self.eigv_adj)
-        # self.eigv_adj = self.eigv_adj[selector]
-        # self.eigf_adj = self.eigf_adj[:, selector]
+        selector = np.isfinite(self.eigv_adj)
+        self.eigv_adj = self.eigv_adj[selector]
+        self.eigf_adj = self.eigf_adj[:, selector]
 
 
 

@@ -2,13 +2,14 @@ import sapy.modal as sa
 import sapy.post as po
 import sapy.sensitivity as sn
 import pdb as pdb
+import numpy as np
 
 option = {'flow': 'DATA/G.txt',
-          'n_points': 200,
+          'n_points': 180,
           'lc': 0.16739,
           'Ymax': 1000,
-          'yi': 10,
-          'alpha': 0.6,
+          'yi': 5,
+          'alpha': 0.8,
           'Re': 160,
           'variables': 'p_u_v',
           'equation': 'Euler_CD',
@@ -16,7 +17,7 @@ option = {'flow': 'DATA/G.txt',
           'Froude': 0.02,
           'slope': 1.3e-5}
 
-"""
+
 f = sa.fluid(option)
 
 f.diff_matrix()
@@ -35,27 +36,25 @@ f.interpolate()
 f.set_operator_variables()
 
 f.solve_eig()
-f.adjoint_spectrum_v_eta('disc')
+f.adjoint_spectrum_v_eta('cont')
 f.solve_eig_adj()
 
-f.save_sim('200_puv_disc')
+f.save_sim('200_puv_cont')
 #f.check_adj()
 
 
 
-v = po.viz('200_puv_disc.npz')
-v.plot_velocity()
+v = po.viz('200_puv_cont.npz')
 v.plot_spectrum()
 # f.omega_alpha_curves(0.0001,2,5
-"""
 
-om = sn.sensitivity('200_puv_disc.npz', 17)
-#om.u_pert(0.4, 0.2)
-#om.cd_pert(0.5, 0.1)
-#om.c_per()
+idx = np.argmax(np.imag(f.eigv))
+print idx
+om = sn.sensitivity('200_puv_cont.npz', idx)
+om.c_per(obj='norm')
 
 #om.sens_spectrum('ke_cd_N001_puv.png', 1e-3, 1e-2, obj='u', shape='sin') # eps, gamma
-om.validation(1, 1e-2, 1, 17, 'tanh')
+#om.validation(1, 1e-2, 1, 17, 'tanh')
 
 
 

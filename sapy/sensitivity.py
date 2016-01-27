@@ -230,7 +230,7 @@ class sensitivity(object):
         mpl.rc('xtick', labelsize=15)
         mpl.rc('ytick', labelsize=15)
 
-        """fig, (ay1, ay2) = plt.subplots(1,2, figsize=(10, 10), dpi=100)
+        fig, (ay1, ay2) = plt.subplots(1,2, figsize=(10, 10), dpi=100)
         lines = ay1.plot(np.real(Gu), self.y, 'r', np.imag(Gu),
                         self.y, 'g', np.abs(Gu), self.y, 'm', lw=2)
         ay1.set_ylabel(r'$y$', fontsize=32)
@@ -246,15 +246,19 @@ class sensitivity(object):
         ay2.set_xlabel(r'$G_{CD}$', fontsize=32)
         ay2.grid()
         ay2.set_ylim([0,5])
-        plt.show(lines)"""
+        plt.show(lines)
 
-        if obj == 'u':
+        if obj == 'norm':
+            return lin.norm(Gu, ord=np.inf), lin.norm(Gcd, ord=np.inf)
+        elif obj == 'u':
             delta_c = np.sum((Gu*self.perturb)*self.integ_matrix)  # +((+i/self.alpha)*v_adj_conj*d_p)*self.integ_matrix)
+            return delta_c
         elif obj == 'cd':
             delta_c = np.sum((Gcd*self.perturb)*self.integ_matrix)
+            return delta_c
         elif obj == 'all':
             delta_c = np.sum((Gu*self.perturb)*self.integ_matrix) + np.sum((Gcd*self.perturb)*self.integ_matrix)
-        return delta_c
+            return delta_c
 
     def sens_spectrum(self, fig_name, eps=0.00001, gamma=0.007, obj='u',  shape='gauss', *args):
         y0 = np.linspace(gamma, 1.5-gamma, 50)
