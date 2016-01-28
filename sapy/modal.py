@@ -732,33 +732,60 @@ class fluid(object):
         sp_re = np.array([])
         sp_im = np.array([])
 
-        bkpl.output_file("spectrum.html")
 
-        TOOLS = "resize, crosshair, pan, wheel_zoom, box_zoom, reset,\
-                    box_select, lasso_select, hover"
-
-        p = bkpl.figure(plot_width=1000, plot_height=600, tools=TOOLS,
-                        title="Superimposed spectrum", x_axis_label='c_r',
-                        y_axis_label='c_i', x_range=(0.8, 0.96),
-                        y_range=(-0.05, 0.1))
 
         COLORS = ['aqua', 'blue', 'fuchsia', 'gold', 'green', 'orange', 'red',
                   'sienna', 'yellow', 'lime']   # from css list
-        j = -1
+
+        sp_re = []
+        sp_im = []
+        alpha = []
+        col = []
+
+        jj = -1
         for i in np.arange(n_step):
-            j = j+1
+            jj = jj+1
             self.set_perturbation(self.vec_alpha[i], self.Re)
             self.set_operator_variables()
             self.solve_eig()
             self.eigv_re = np.real(self.eigv)
             self.eigv_im = np.imag(self.eigv)
-            sp_re = self.eigv_re.tolist()
-            sp_im = self.eigv_im.tolist()
-            if j > 9:
-                j = j-10    # these with the above inizialization is needed for
+            sp_re = sp_re + self.eigv_re.tolist()
+            sp_im = sp_im + self.eigv_im.tolist()
+            alpha = alpha + (np.ones(len(self.eigv_im))*self.vec_alpha[i]).tolist()
+            if jj > 9:
+                jj = jj-10    # these with the above inizialization is needed for
             # the iteration in the COLOURS list
+            col = col + [COLORS[jj]]*len(self.eigv_im)
 
-            p.circle(sp_re, sp_im, size=10, fill_color=COLORS[j])
+        source = bkpl.ColumnDataSource(
+                data=dict(
+                    x = sp_re,
+                    y = sp_im,
+                    a = alpha,
+                    color = col,
+                ))
+
+        hover = bkmd.HoverTool(
+        tooltips=[
+            ("index", "$index"),
+            ("(Re, Im)", "(@x, @y)"),
+            ("alpha", "@a"),
+        ]
+        )
+
+        bkpl.output_file("spectrum.html")
+
+        TOOLS = "resize, crosshair, pan, wheel_zoom, box_zoom, reset,\
+                            box_select, lasso_select"
+
+        p = bkpl.figure(plot_width=1000, plot_height=600, tools=[hover, TOOLS],
+                                title="Superimposed Spectrum for varing wavenumbers", x_axis_label='c_r',
+                                y_axis_label='c_i', x_range=(0.8, 0.96),
+                                y_range=(-0.05, 0.1))
+
+        p.circle('x', 'y', size=12.5, source=source, fill_color='color')
+
         bkpl.show(p)
 
     def save_sim(self, file_name):

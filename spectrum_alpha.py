@@ -27,7 +27,7 @@ f.read_velocity_profile()
 f.mapping()
 f.interpolate()
 
-f.superpose_spectrum(0.1, 0.5, 5)
+f.superpose_spectrum(0.1, 5, 49)
 
 
 """

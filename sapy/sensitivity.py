@@ -231,19 +231,21 @@ class sensitivity(object):
         mpl.rc('ytick', labelsize=15)
 
         fig, (ay1, ay2) = plt.subplots(1,2, figsize=(10, 10), dpi=100)
-        lines = ay1.plot(np.real(Gu), self.y, 'r', np.imag(Gu),
-                        self.y, 'g', np.abs(Gu), self.y, 'm', lw=2)
+        #lines = ay1.plot(np.real(Gu), self.y, 'r', np.imag(Gu),
+        #                self.y, 'g', np.abs(Gu), self.y, 'm', lw=2)
+        lines = ay1.plot(np.abs(Gu), self.y, 'm', lw=2)
         ay1.set_ylabel(r'$y$', fontsize=32)
-        ay1.set_xlabel(r'$G_U$', fontsize=32)
-        lgd = ay1.legend((lines), (r'$Re$', r'$Im$', r'$Mod$' ), loc=3,
-                                 ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
+        ay1.set_xlabel(r'$|G_U|$', fontsize=32)
+        #lgd = ay1.legend((lines), (r'$Re$', r'$Im$', r'$Mod$' ), loc=3,
+    #                             ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
         ay1.set_ylim([0,5])
         ay1.grid()
 
-        lines = ay2.plot(np.real(Gcd), self.y, 'r', np.imag(Gcd),
-                        self.y, 'g', np.abs(Gcd), self.y, 'm', lw=2)
+        #lines = ay2.plot(np.real(Gcd), self.y, 'r', np.imag(Gcd),
+        #                self.y, 'g', np.abs(Gcd), self.y, 'm', lw=2)
+        lines = ay2.plot(np.abs(Gcd), self.y, 'm', lw=2)
         ay2.set_ylabel(r'$y$', fontsize=32)
-        ay2.set_xlabel(r'$G_{CD}$', fontsize=32)
+        ay2.set_xlabel(r'$|G_{CD}|$', fontsize=32)
         ay2.grid()
         ay2.set_ylim([0,5])
         plt.show(lines)

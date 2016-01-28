@@ -5,11 +5,11 @@ import pdb as pdb
 import numpy as np
 
 option = {'flow': 'DATA/G.txt',
-          'n_points': 180,
+          'n_points': 160,
           'lc': 0.16739,
           'Ymax': 1000,
           'yi': 5,
-          'alpha': 0.8,
+          'alpha': 0.4,
           'Re': 160,
           'variables': 'p_u_v',
           'equation': 'Euler_CD',
@@ -46,10 +46,10 @@ f.save_sim('200_puv_cont')
 
 v = po.viz('200_puv_cont.npz')
 v.plot_spectrum()
+v.plot_velocity()
 # f.omega_alpha_curves(0.0001,2,5
 
 idx = np.argmax(np.imag(f.eigv))
-print idx
 om = sn.sensitivity('200_puv_cont.npz', idx)
 om.c_per(obj='norm')
 
