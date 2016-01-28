@@ -82,7 +82,7 @@ class fluid(object):
     def read_velocity_profile(self):
         """ read from a file the velocity profile store in a
         .txt file and set the variable_data members"""
-        in_txt = np.genfromtxt(self.option['flow'], delimiter=' ', skiprows=1)
+        in_txt = np.genfromtxt(self.option['flow'], delimiter=' ', skip_header=1)
         self.y_data = in_txt[:, 0]
         self.U_data = in_txt[:, 1]
         self.dU_data = in_txt[:, 2]
@@ -748,10 +748,10 @@ class fluid(object):
         for i in np.arange(n_step):
             j = j+1
             self.set_perturbation(self.vec_alpha[i], self.Re)
-            self.choose_variables()
+            self.set_operator_variables()
             self.solve_eig()
-            # sp_re = np.concatenate((sp_re, self.eigv_re))
-            # sp_im = np.concatenate((sp_im, self.eigv_im))
+            self.eigv_re = np.real(self.eigv)
+            self.eigv_im = np.imag(self.eigv)
             sp_re = self.eigv_re.tolist()
             sp_im = self.eigv_im.tolist()
             if j > 9:
