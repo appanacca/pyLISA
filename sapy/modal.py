@@ -409,20 +409,20 @@ class fluid(object):
         delta = self.D[1] - self.alpha**2 * I
 
         AA1 = np.zeros((self.N, self.N))
-        AA2 = i*self.alpha*I
-        AA3 = self.D[0]
+        AA2 = I
+        AA3 = -(i/self.alpha)*self.D[0]
 
-        AB1 = i*self.alpha*I
+        AB1 = I
 
         if (self.option['equation'] == 'Euler_wave' or
                 self.option['equation'] == 'Euler'):
-                    AB2 = i*self.alpha*np.diag(self.U)
-                    AC3 = i*self.alpha*np.diag(self.U)
+                    AB2 = np.diag(self.U)
+                    AC3 = np.diag(self.U)
 
         elif (self.option['equation'] == 'Euler_CD' or
               self.option['equation'] == 'Euler_CD_wave'):
-                AB2 = i*self.alpha*np.diag(self.U) + np.diag(self.aCD*self.U)
-                AC3 = + i*self.alpha*np.diag(self.U)
+                AB2 = np.diag(self.U) -(i/self.alpha)*np.diag(self.aCD*self.U)
+                AC3 = + np.diag(self.U)
 
         elif self.option['equation'] == 'Euler_CD_turb':
             AB2 = (i*self.alpha*np.diag(self.U)-(2*self.lc**2) *
@@ -452,13 +452,13 @@ class fluid(object):
                        np.dot(self.D[0], np.diag(self.ddU))))
             AC3 = + i*self.alpha*np.diag(self.U) - delta/self.Re
 
-        AB3 = np.diag(self.dU)
+        AB3 = -(i/self.alpha)*np.diag(self.dU)
 
-        AC1 = self.D[0]
+        AC1 = -(i/self.alpha)*self.D[0]
         AC2 = np.zeros((self.N, self.N))
 
         BA1 = BA2 = BA3 = BB1 = BB3 = BC1 = BC2 = np.zeros((self.N, self.N))
-        BB2 = BC3 = i * I * self.alpha
+        BB2 = BC3 =  I
 
         AA = np.concatenate((AA1, AA2, AA3), axis=1)
         AB = np.concatenate((AB1, AB2, AB3), axis=1)
