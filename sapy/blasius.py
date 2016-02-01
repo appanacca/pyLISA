@@ -1,25 +1,25 @@
 # Final Project - Ian Carr
 # Blasius solution - introduction to fluids
 
-import numpy as np 
-import matplotlib.pyplot as plt 
+import numpy as np
+import matplotlib.pyplot as plt
 import scipy.interpolate as intp
 
 
 def blasius(y_gl):
 	"""compute the boundary layer profile """
-	
+
 	# building initial parameters
 	nfinal = 10.	# final value of n
 	dn = 0.01	# step size
-	N = int(nfinal/dn)  # 
+	N = int(nfinal/dn)  #
 	n = np.linspace(0.0,nfinal,N)
 	f = np.zeros(N)
 	f1 = np.zeros(N)
 	f2 = np.zeros(N)
 
 	# explicitly initial conditions
-	f[0] = 0. 
+	f[0] = 0.
 	f1[0] = 0.
 	"""
 	# option for shooting method
@@ -94,7 +94,7 @@ def blasius(y_gl):
 	#plt.show()
 
 	#y=y_gl
-	resc=np.sqrt(2)/2.4 #1.7207876
+	resc=np.sqrt(2)/2.4  #1.7207876
 	ym=10*resc
 	iu=intp.interp1d(n,u)
 	idu=intp.interp1d(n,du)
@@ -108,9 +108,9 @@ def blasius(y_gl):
 	du[np.where(y_gl<ym)]=idu(y_gl[np.where(y_gl<ym)]/resc)/resc
 	ddu[np.where(y_gl<ym)]=iddu(y_gl[np.where(y_gl<ym)]/resc)/(resc**2)
 
-	
 
-	
+
+
 
 	plt.plot(u,y_gl,du,y_gl,ddu,y_gl)
 	plt.ylabel('$y$',fontsize=18)
@@ -125,8 +125,3 @@ import blasius as bl
 y=np.linspace(0,10,10)
 bl.blasius(y)
 """
-
-
-
-
-

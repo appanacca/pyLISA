@@ -10,9 +10,9 @@ option = {'flow': 'DATA/G.txt',
           'Ymax': 1000,
           'yi': 5,
           'alpha': 0.1,
-          'Re': 160,
+          'Re': 1274,
           'variables': 'p_u_v',
-          'equation': 'LNS_CD',
+          'equation': 'LNS',
           'mapping': ['semi_infinite_PB', [0, (46.7/13.8)]],
           'Froude': 0.02,
           'slope': 1.3e-5}
@@ -22,12 +22,11 @@ f = sa.fluid(option)
 
 f.diff_matrix()
 f.integ_matrix()
-f.read_velocity_profile()
+#f.read_velocity_profile()
 f.mapping()
 
-f.interpolate()
-
-# f.set_blasisus(f.y)
+f.set_blasius(f.y)
+#f.interpolate()
 
 # f.infinite_mapping()
 # f.set_hyptan()

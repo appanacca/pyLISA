@@ -431,13 +431,13 @@ class fluid(object):
             AC3 = + i*self.alpha*np.diag(self.U)
 
         elif self.option['equation'] == 'LNS':
-            AB2 = i*self.alpha*np.diag(self.U) - delta/self.Re
-            AC3 = i*self.alpha*np.diag(self.U) - delta/self.Re
+            AB2 = np.diag(self.U) +(i/self.alpha)* delta/self.Re
+            AC3 = np.diag(self.U) +(i/self.alpha)*delta/self.Re
 
         elif self.option['equation'] == 'LNS_CD':
-            AB2 = (i*self.alpha*np.diag(self.U) - delta/self.Re +
-                   np.diag(self.aCD*self.U))
-            AC3 = + i*self.alpha*np.diag(self.U) - delta/self.Re
+            AB2 = (np.diag(self.U) +(i/self.alpha)* delta/self.Re
+                        -(i/self.alpha)*np.diag(self.aCD*self.U))
+            AC3 = + np.diag(self.U) +(i/self.alpha)* delta/self.Re
 
         elif self.option['equation'] == 'LNS_turb':
             AB2 = (i*self.alpha*np.diag(self.U) - delta/self.Re -
@@ -668,12 +668,28 @@ class fluid(object):
 
         elif self.option['variables'] == 'p_u_v':
 
-            idx_bc = np.array([2*self.N, 3*self.N - 1])
-            self.C[idx_bc, :] = np.zeros(3*self.N)
-            self.E[idx_bc, :] = np.zeros(3*self.N)
+            if  (self.option['equation'] == 'Euler_CD' or
+                  self.option['equation'] == 'Euler'):
+                idx_bc = np.array([2*self.N, 3*self.N - 1])
+                self.C[idx_bc, :] = np.zeros(3*self.N)
+                self.E[idx_bc, :] = np.zeros(3*self.N)
 
-            self.C[2*self.N, 2*self.N] = 1
-            self.C[3*self.N - 1, 3*self.N - 1] = 1
+                self.C[2*self.N, 2*self.N] = 1
+                self.C[3*self.N - 1, 3*self.N - 1] = 1
+
+            elif  (self.option['equation'] == 'LNS' or
+                    self.option['equation'] == 'LNS_CD'):
+                idx_bc = np.array([self.N, 2*self.N, 2*self.N - 1, 3*self.N - 1])
+                # index of the boundaries
+
+                self.C[idx_bc, :] = np.zeros(3*self.N)
+                self.E[idx_bc, :] = np.zeros(3*self.N)
+
+                self.C[self.N, self.N] = 1
+                self.C[2*self.N - 1, 2*self.N - 1] = 1
+
+                self.C[2*self.N, 2*self.N] = 1
+                self.C[3*self.N - 1, 3*self.N - 1] = 1
 
 
     @nb.jit
