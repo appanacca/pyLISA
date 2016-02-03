@@ -11,7 +11,7 @@ def blasius(y_gl):
 
 	# building initial parameters
 	nfinal = 10.	# final value of n
-	dn = 0.01	# step size
+	dn = 0.0001	# step size
 	N = int(nfinal/dn)  #
 	n = np.linspace(0.0,nfinal,N)
 	f = np.zeros(N)

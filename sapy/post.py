@@ -75,7 +75,7 @@ class viz(object):
         #              bbox_inches='tight', dpi=50)
         plt.show()
 
-    def plot_spectrum(self):
+    def plot_spectrum(self, file_name='spectrum.out', *args):
             mpl.rc('xtick', labelsize=20)
             mpl.rc('ytick', labelsize=20)
             """ plot the spectrum """
@@ -84,6 +84,10 @@ class viz(object):
 
             self.eigv_re_adj = np.real(self.eigv_adj)
             self.eigv_im_adj = np.imag(self.eigv_adj)
+
+            #file_name = raw_input("Please enter spectrum file name: ")
+            np.savetxt(file_name, np.c_[self.eigv_re, self.eigv_im, self.eigv_re_adj, self.eigv_im_adj],
+                    fmt='%1.4e',  header='eigv_re    eigv_im    eigv_re_adj    eigv_im_adj')
 
             #  for i in np.arange(10):
             self.fig, ay = plt.subplots(figsize=(10, 6), dpi=100)
@@ -134,7 +138,7 @@ class viz(object):
             adj_n = np.argmin(np.abs(self.eigv_adj - adj_c_range))
             adj_c_picked = self.eigv_adj[adj_n]
 
-            self.eigfun_picked = self.eigf[:, n]  # *(-0.13 -0.99j
+            self.eigfun_picked = self.eigf[:, n]
             print c_picked  # , lin.norm(self.eigfun_picked)
             print adj_c_picked
             print n
@@ -190,6 +194,26 @@ class viz(object):
                 p = self.eigfun_picked[0:self.N]
                 u = self.eigfun_picked[self.N:2*self.N]
                 v = self.eigfun_picked[2*self.N:3*self.N]
+
+                p_re = np.real(p)
+                p_im = np.imag(p)
+                p_mod = np.real(np.sqrt(p*np.conjugate(p)))
+
+                u_re = np.real(u)
+                u_im = np.imag(u)
+                u_mod = np.real(np.sqrt(u*np.conjugate(u)))
+
+                v_re = np.real(v)
+                v_im = np.imag(v)
+                v_mod = np.real(np.sqrt(v*np.conjugate(v)))
+
+                #file_name_fun = raw_input("Please enter function file name: ")
+                #np.savetxt(file_name_fun+'.out', np.transpose([self.y, p_re, p_im, p_mod,
+                #u_re, u_im, u_mod, v_re, v_im, v_mod]), fmt='%1.4e',
+                #            header='y   p_re    p_im    p_mod   u_re    u_im    u_mod    v_re    v_im    v_mod')
+
+                #np.savetxt(file_name_fun+'.out', np.transpose([self.y, p_re]), fmt='%1.4e',
+                #                            header='y   p_re    p_im    p_mod   u_re    u_im    u_mod    v_re    v_im    v_mod')
 
                 fig2, (ay1, ay2, ay3) = plt.subplots(1, 3)  # , dpi = 50)
                 lines1 = ay1.plot(np.real(p), self.y, 'r', np.imag(p), self.y, 'g',
@@ -268,6 +292,26 @@ class viz(object):
                 ay6.set_ylim([0, 5])
                 # ay3.set_xlim([-1, 1])
                 ay6.grid()
+
+                p_re_adj = np.real(p_adj)
+                p_im_adj = np.imag(p_adj)
+                p_mod_adj = np.real(np.sqrt(p_adj*np.conjugate(p_adj)))
+
+                u_re_adj = np.real(u_adj)
+                u_im_adj = np.imag(u_adj)
+                u_mod_adj = np.real(np.sqrt(u_adj*np.conjugate(u_adj)))
+
+                v_re_adj = np.real(v_adj)
+                v_im_adj = np.imag(v_adj)
+                v_mod_adj = np.real(np.sqrt(v_adj*np.conjugate(v_adj)))
+
+
+                file_name_fun = raw_input("Please enter function file name: ")
+                np.savetxt(file_name_fun+'.out', np.transpose([self.y, p_re, p_im, p_mod,
+                u_re, u_im, u_mod, v_re, v_im, v_mod, p_re_adj, p_im_adj, p_mod_adj,
+                u_re_adj, u_im_adj, u_mod_adj, v_re_adj, v_im_adj, v_mod_adj]), fmt='%1.4e',
+                header='y   p_re    p_im    p_mod   u_re    u_im    u_mod    v_re    v_im    v_mod \
+                    p_re_adj    p_im_adj    p_mod_adj   u_re_adj    u_im_adj    u_mod_adj    v_re_adj    v_im_adj    v_mod_adj')
 
                 plt.show()
 
