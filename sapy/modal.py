@@ -811,7 +811,7 @@ class fluid(object):
                  ddU=self.ddU, aCD=self.aCD, daCD=self.daCD,
                  eigv=self.eigv, eigf=self.eigf, D=self.D,
                  adj_eigv=self.eigv_adj, adj_eigf=self.eigf_adj,
-                 integ_matrix=self.integ_matrix)
+                 integ_matrix=self.integ_matrix, alpha=self.alpha)
 
     def check_adj(self):
         H = (self.A - self.eigv[16]*self.B)

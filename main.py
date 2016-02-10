@@ -4,15 +4,15 @@ import sapy.sensitivity as sn
 import pdb as pdb
 import numpy as np
 
-option = {'flow': 'DATA/HtoChris.txt',
-          'n_points': 200,
+option = {'flow': 'DATA/G.txt',
+          'n_points': 300,
           'lc': 0.16739,
           'Ymax': 1000,
           'yi': 5,
           'alpha': 0.6,
-          'Re': 372,
+          'Re': 157,
           'variables': 'p_u_v',
-          'equation': 'Euler',
+          'equation': 'LNS',
           'mapping': ['semi_infinite_PB', [0, (46.7/13.8)]],
           'Froude': 0.02,
           'slope': 1.3e-5}
