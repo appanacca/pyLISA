@@ -9,10 +9,10 @@ option = {'flow': 'DATA/G.txt',
           'lc': 0.16739,
           'Ymax': 1000,
           'yi': 5,
-          'alpha': 0.6,
-          'Re': 157,
+          'alpha': 0.55,
+          'Re': 1e5,
           'variables': 'p_u_v',
-          'equation': 'LNS',
+          'equation': 'LNS_CD',
           'mapping': ['semi_infinite_PB', [0, (46.7/13.8)]],
           'Froude': 0.02,
           'slope': 1.3e-5}
@@ -46,7 +46,7 @@ f.save_sim('200_puv_disc')
 v = po.viz('200_puv_disc.npz')
 v.plot_velocity()
 v.plot_spectrum()
-#  f.omega_alpha_curves(0.0001,2,5
+#f.omega_alpha_curves(0.1,1,10)
 
 idx = np.argmax(np.imag(f.eigv))
 om = sn.sensitivity('200_puv_disc.npz', idx)

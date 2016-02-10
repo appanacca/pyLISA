@@ -6,15 +6,16 @@ import pdb as pdb
 import numpy as np
 import matplotlib.pyplot as plt
 
+"""
 option = {'flow': 'DATA/G.txt',
-          'n_points': 200,
+          'n_points': 300,
           'lc': 0.16739,
           'Ymax': 1000,
           'yi': 10,
           'alpha': 0.6,
-          'Re': 160,
+          'Re': 1e5,
           'variables': 'p_u_v',
-          'equation': 'Euler_CD',
+          'equation': 'LNS_CD',
           'mapping': ['semi_infinite_PB', [0, (46.7/13.8)]],
           'Froude': 0.02,
           'slope': 1.3e-5}
@@ -27,31 +28,33 @@ f.read_velocity_profile()
 f.mapping()
 f.interpolate()
 
-f.superpose_spectrum(0.1, 5, 49)
-
+f.superpose_spectrum(0.1, 1, 10)
 
 """
-#a = np.linspace(0.1,4, 10)
-c = np.arange(0.1, 1.1, 0.02)
-b = np.arange(1.1, 4.1, 0.1)
-a = np.concatenate((c,b))
+
+a = np.linspace(0.1,1, 30)
+#c = np.arange(0.1, 1.1, 0.02)
+#b = np.arange(1.1, 4.1, 0.1)
+#a = np.concatenate((c,b))
 
 eigv_sel = np.zeros(len(a))*(1 +0j)
-norm_gu = np.zeros(len(a))
-norm_gcd = np.zeros(len(a))
+norm_guRe = np.zeros(len(a))
+norm_gcdRe = np.zeros(len(a))
+norm_guIm = np.zeros(len(a))
+norm_gcdIm = np.zeros(len(a))
 
 
 for i in np.arange(len(a)):
 
     option = {'flow': 'DATA/G.txt',
-              'n_points': 200,
+              'n_points': 300,
               'lc': 0.16739,
               'Ymax': 1000,
               'yi': 10,
               'alpha': a[i],
-              'Re': 160,
+              'Re': 1e5,
               'variables': 'p_u_v',
-              'equation': 'Euler_CD',
+              'equation': 'LNS_CD',
               'mapping': ['semi_infinite_PB', [0, (46.7/13.8)]],
               'Froude': 0.02,
               'slope': 1.3e-5}
@@ -65,17 +68,21 @@ for i in np.arange(len(a)):
     f.set_operator_variables()
     f.solve_eig()
 
-    #idx = np.argmax(np.imag(f.eigv))
+    idx = np.argmax(np.imag(f.eigv))
     #print idx
-    #eigv_sel[i] = f.eigv[idx]
+    eigv_sel[i] = f.eigv[idx]
 
-    #f.adjoint_spectrum_v_eta('cont')
-    #f.solve_eig_adj()
-    #f.save_sim('200_puv_cont')
-    #om = sn.sensitivity('200_puv_cont.npz', idx)
-    #norm_gu[i], norm_gcd[i] = om.c_per(obj='norm')
+    f.adjoint_spectrum_v_eta('disc')
+    f.solve_eig_adj()
+    f.save_sim('200_puv_disc')
+    om = sn.sensitivity('200_puv_disc.npz', idx)
+    norm_guRe[i], norm_guIm[i], norm_gcdRe[i], norm_gcdIm[i] = om.c_per(obj='norm')
+
+np.savez('norm_alpha', a, norm_guRe, norm_guIm, norm_gcdRe, norm_gcdIm)
+
+
 fig, ay  =  plt.subplots(dpi = 150)
-lines = ay.plot(a, norm_gu, 'r', a, norm_gcd, 'b', lw = 2)
+lines = ay.plot(a, norm_guRe, 'r', a, norm_gcdRe, 'b', a, norm_guIm, 'g', a, norm_gcdIm, 'c', lw = 2)
 #ay.set_ylabel(r'$c_i$',fontsize = 32)
 ay.set_xlabel(r'$\alpha$',fontsize = 32)
 #ay.set_ylim([-0.02, 0.12])
@@ -96,4 +103,3 @@ ay.set_xlim([0.8, 0.92])
 ay.grid()
 fig.savefig('spectrum_alpha.png', bbox_inches = 'tight',dpi = 150)
 plt.show()
-"""
