@@ -4,12 +4,12 @@ import sapy.sensitivity as sn
 import pdb as pdb
 import numpy as np
 
-option = {'flow': 'DATA/G.txt',
+option = {'flow': 'DATA/H.txt',
           'n_points': 300,
           'lc': 0.16739,
           'Ymax': 1000,
           'yi': 5,
-          'alpha': 0.55,
+          'alpha':  0.1,
           'Re': 1e5,
           'variables': 'p_u_v',
           'equation': 'LNS_CD',
@@ -50,7 +50,9 @@ v.plot_spectrum()
 
 idx = np.argmax(np.imag(f.eigv))
 om = sn.sensitivity('200_puv_disc.npz', idx)
-om.c_per(obj='norm')
+a, b, c, d = om.c_per(obj='norm')
+
+print a, b, c,d
 
 #om.sens_spectrum('ke_cd_N001_puv.png', 1e-3, 1e-2, obj='u', shape='sin') # eps, gamma
 #om.validation(1, 1e-2, 1, 17, 'tanh')

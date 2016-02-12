@@ -32,7 +32,7 @@ f.superpose_spectrum(0.1, 1, 10)
 
 """
 
-a = np.linspace(0.1,1, 30)
+a = np.linspace(0.1, 0.6, 15)
 #c = np.arange(0.1, 1.1, 0.02)
 #b = np.arange(1.1, 4.1, 0.1)
 #a = np.concatenate((c,b))
@@ -46,7 +46,7 @@ norm_gcdIm = np.zeros(len(a))
 
 for i in np.arange(len(a)):
 
-    option = {'flow': 'DATA/G.txt',
+    option = {'flow': 'DATA/H.txt',
               'n_points': 300,
               'lc': 0.16739,
               'Ymax': 1000,
@@ -78,10 +78,10 @@ for i in np.arange(len(a)):
     om = sn.sensitivity('200_puv_disc.npz', idx)
     norm_guRe[i], norm_guIm[i], norm_gcdRe[i], norm_gcdIm[i] = om.c_per(obj='norm')
 
-np.savez('norm_alpha', a, norm_guRe, norm_guIm, norm_gcdRe, norm_gcdIm)
+np.savez('norm_alpha_H_300', alpha=a, norm_guRe=norm_guRe, norm_guIm=norm_guIm, norm_gcdRe=norm_gcdRe, norm_gcdIm=norm_gcdIm)
 
 
-fig, ay  =  plt.subplots(dpi = 150)
+fig, ay  =  plt.subplots(dpi = 100)
 lines = ay.plot(a, norm_guRe, 'r', a, norm_gcdRe, 'b', a, norm_guIm, 'g', a, norm_gcdIm, 'c', lw = 2)
 #ay.set_ylabel(r'$c_i$',fontsize = 32)
 ay.set_xlabel(r'$\alpha$',fontsize = 32)
@@ -91,15 +91,4 @@ lgd = ay.legend((lines), (r'$G_U$', r'$G_{C_D}$'), loc=3,
                  ncol=2, bbox_to_anchor=(0, 1), fontsize=32)
 ay.grid()
 fig.savefig('norm_alpha.png', bbox_inches = 'tight',dpi = 150)
-plt.show()
-
-
-fig, ay  =  plt.subplots(dpi = 150)
-ay.plot(np.real(eigv), np.imag(eigv), 'ro', lw = 2)
-ay.set_ylabel(r'$c_i$',fontsize = 32)
-ay.set_xlabel(r'$c_r$',fontsize = 32)
-ay.set_ylim([-0.02, 0.12])
-ay.set_xlim([0.8, 0.92])
-ay.grid()
-fig.savefig('spectrum_alpha.png', bbox_inches = 'tight',dpi = 150)
 plt.show()
