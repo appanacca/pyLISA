@@ -36,6 +36,8 @@ class viz(object):
     def __init__(self, in_data):
         # as input needs the in_data.npz with the simulation results
         data = np.load(in_data)
+        self.Re = data['Re']
+        self.flow = data['flow']
         self.y = data['y']
         self.U = data['U']
         self.dU = data['dU']
@@ -90,7 +92,7 @@ class viz(object):
             #np.savetxt(file_name, np.c_[self.eigv_re, self.eigv_im, self.eigv_re_adj, self.eigv_im_adj],
             #        fmt='%1.4e',  header='eigv_re    eigv_im    eigv_re_adj    eigv_im_adj')
             np.savetxt(file_name, np.c_[self.eigv_re*self.alpha, self.eigv_im*self.alpha, self.eigv_re_adj*self.alpha, self.eigv_im_adj*self.alpha],
-                            fmt='%1.4e',  header='ALPHA = 0.6 eigv_re    eigv_im    eigv_re_adj    eigv_im_adj')
+                            fmt='%1.4e',  header=str(self.option)+'\n'+'eigv_re    eigv_im    eigv_re_adj    eigv_im_adj')
 
             #  for i in np.arange(10):
             self.fig, ay = plt.subplots(figsize=(10, 6), dpi=100)
@@ -314,7 +316,7 @@ class viz(object):
                 np.savetxt(file_name_fun+'.out', np.transpose([self.y, p_re, p_im, p_mod,
                 u_re, u_im, u_mod, v_re, v_im, v_mod, p_re_adj, p_im_adj, p_mod_adj,
                 u_re_adj, u_im_adj, u_mod_adj, v_re_adj, v_im_adj, v_mod_adj]), fmt='%1.4e',
-                header='y   p_re    p_im    p_mod   u_re    u_im    u_mod    v_re    v_im    v_mod \
+                header=str(self.option)+'\n'+'y   p_re    p_im    p_mod   u_re    u_im    u_mod    v_re    v_im    v_mod \
                     p_re_adj    p_im_adj    p_mod_adj   u_re_adj    u_im_adj    u_mod_adj    v_re_adj    v_im_adj    v_mod_adj')
 
                 plt.show()

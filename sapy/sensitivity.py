@@ -44,6 +44,7 @@ class sensitivity(object):
 
         # as input needs the in_data.npz with the simulation results
         data = np.load(in_data)
+        self.Re = data['Re']
         self.y = data['y']
         self.U = data['U']
         self.dU = data['dU']
@@ -159,7 +160,7 @@ class sensitivity(object):
         ay.grid()
         plt.show(lines)
 
-    def c_per(self, obj='u', *args):
+    def c_per(self, obj='u', file_name='sens_fun.out', *args):
         i = (0 + 1j)
         if self.option['variables'] == 'v_eta':
             v = self.eigf[:, self.idx]
@@ -210,7 +211,7 @@ class sensitivity(object):
             v_adj_conj = np.conjugate(v_adj)
             u_adj_conj = np.conjugate(u_adj)
 
-            f_norm = v_adj_conj*v + u*u_adj_conj*p
+            f_norm = v_adj_conj*v + u*u_adj_conj
             normaliz = np.sum(self.integ_matrix*f_norm)
 
             I = np.eye(len(v))
@@ -223,6 +224,9 @@ class sensitivity(object):
                     +v*v_adj_conj +u*u_adj_conj)/normaliz
 
             Gcd = ((-(i*0.552)/self.alpha)*self.U*u*u_adj_conj)/normaliz
+
+            np.savetxt(file_name, np.c_[self.y, np.abs(Gu), np.abs(Gcd), np.real(Gu), np.imag(Gu), np.real(Gcd), np.imag(Gcd)],
+                            fmt='%1.4e',  header=str(self.option)+'\n'+'\n'+'MAX |Gu|:'+str(np.max(np.abs(Gu)))+'MAX |Gcd|:'+str(np.max(np.abs(Gcd)))+'\n'+'y   |Gu|    |Gcd|    Gu_real     Gu_imag     Gcd_real    Gcd_imag')
 
 
         phase_Gu = np.arctan(np.imag(Gu)/np.real(Gu))
