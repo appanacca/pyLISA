@@ -5,12 +5,12 @@ import pdb as pdb
 import numpy as np
 
 option = {'flow': 'DATA/G.txt',
-          'n_points': 300,
+          'n_points': 290,
           'lc': 0.16739,
           'Ymax': 1000,
           'yi': 5,
-          'alpha': 0.66552,
-          'Re': 157.922677,
+          'alpha': 0.55,
+          'Re': 157.922677,   #157.922677   #1e5
           'variables': 'p_u_v',
           'equation': 'LNS_CD',
           'mapping': ['semi_infinite_PB', [0, (46.7/13.8)]],
@@ -36,7 +36,7 @@ f.interpolate()
 f.set_operator_variables()
 
 f.solve_eig()
-f.adjoint_spectrum('disc')
+f.adjoint_spectrum('cont')
 f.solve_eig_adj()
 
 f.save_sim('200_puv_disc')

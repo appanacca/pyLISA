@@ -225,6 +225,11 @@ class sensitivity(object):
 
             Gcd = ((-(i*0.552)/self.alpha)*self.U*u*u_adj_conj)/normaliz
 
+
+            ######## ATTENTION;  HERE I TRANSFORM THE SENSITIVITY FROM delta_C to delta_OMEGA
+            Gu = Gu*self.alpha
+            Gcd = Gcd*self.alpha
+
             np.savetxt(file_name, np.c_[self.y, np.abs(Gu), np.abs(Gcd), np.real(Gu), np.imag(Gu), np.real(Gcd), np.imag(Gcd)],
                             fmt='%1.4e',  header=str(self.option)+'\n'+'\n'+'MAX |Gu|:'+str(np.max(np.abs(Gu)))+'MAX |Gcd|:'+str(np.max(np.abs(Gcd)))+'\n'+'y   |Gu|    |Gcd|    Gu_real     Gu_imag     Gcd_real    Gcd_imag')
 
@@ -234,7 +239,7 @@ class sensitivity(object):
         mpl.rc('xtick', labelsize=15)
         mpl.rc('ytick', labelsize=15)
 
-        """fig, (ay1, ay2) = plt.subplots(1,2, figsize=(10, 10), dpi=100)
+        fig, (ay1, ay2) = plt.subplots(1,2, figsize=(10, 10), dpi=100)
         lines = ay1.plot(np.real(Gu), self.y, 'r', np.imag(Gu),
                         self.y, 'g', np.abs(Gu), self.y, 'm', lw=2)
         #lines = ay1.plot(np.abs(Gu), self.y, 'm', lw=2)
@@ -252,7 +257,7 @@ class sensitivity(object):
         ay2.set_xlabel(r'$G_{CD}$', fontsize=32)
         ay2.grid()
         ay2.set_ylim([0,5])
-        plt.show(lines)"""
+        plt.show(lines)
 
         if obj == 'norm':
             return lin.norm(np.real(Gu), ord=np.inf), lin.norm(np.imag(Gu), ord=np.inf), lin.norm(np.real(Gcd), ord=np.inf), lin.norm(np.imag(Gcd), ord=np.inf)

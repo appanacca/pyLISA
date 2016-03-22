@@ -600,12 +600,12 @@ class fluid(object):
                 AA3 = (i/self.alpha)*D1
 
                 AB1 = I
-                AB2 = U - (i/self.alpha)*U*CD
+                AB2 = U - (i/self.alpha)*U*CD +(i/self.alpha)*(delta/self.Re)
                 AB3 = np.zeros((self.N, self.N))
 
                 AC1 = (i/self.alpha)*D1
                 AC2 = -(i/self.alpha)*dU
-                AC3 = U
+                AC3 = U +(i/self.alpha)*(delta/self.Re)
 
                 BA1 = BA2 = BA3 = BB1 = BB3 = BC1 = BC2 = np.zeros((self.N, self.N))
                 BB2 = BC3 = I

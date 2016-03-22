@@ -3,7 +3,7 @@ import pdb as pdb
 import numpy as np
 import matplotlib.pyplot as plt
 
-data = np.load('norm_alpha_G_300_Re_1e5.npz')
+data = np.load('norm_alpha_G_300_RE_157.npz')
 
 alpha = data['alpha']
 norm_guRe = data['norm_guRe']
@@ -11,38 +11,19 @@ norm_guIm = data['norm_guIm']
 norm_gcdRe = data['norm_gcdRe']
 norm_gcdIm = data['norm_gcdIm']
 
-#####  HERE WE CHANGE THE POINTS IN THE GRAPH THAT ARE NOT CONVERGED ########
 
-#320
-norm_guRe[5] = 23.9823723489
-norm_guIm[5] = 27.4481022931
-norm_gcdRe[5] = 13.5777107098
-norm_gcdIm[5] = 18.0285824603
+alpha = alpha[1:-1]
+norm_guRe = norm_guRe[1:-1]
+norm_guIm = norm_guIm[1:-1]
+norm_gcdRe = norm_gcdRe[1:-1]
+norm_gcdIm = norm_gcdIm[1:-1]
 
-#320
-norm_guRe[17] = 114.178494563
-norm_guIm[17] = 99.8659103526
-norm_gcdRe[17] = 7.34718332575
-norm_gcdIm[17] = 9.02991645272
+###### TRANSFORM THE SENSITIVITY TO delta_omega FROM delta_C #######
 
-#310
-norm_guRe[18] = 138.161828881
-norm_guIm[18] = 122.678729019
-norm_gcdRe[18] = 8.23371944525
-norm_gcdIm[18] = 9.44076498559
-
-#320
-norm_guRe[23] = 494.983559849
-norm_guIm[23] = 439.580916522
-norm_gcdRe[23] = 14.7755873476
-norm_gcdIm[23] = 13.9936420485
-
-#320
-norm_guRe[24] = 637.420024184
-norm_guIm[24] = 540.9776788
-norm_gcdRe[24] = 14.3230807882
-norm_gcdIm[24] = 16.4516500374
-
+norm_guRe = norm_guRe*alpha
+norm_guIm = norm_guIm*alpha
+norm_gcdRe = norm_gcdRe*alpha
+norm_gcdIm = norm_gcdIm*alpha
 
 ######  PLOT THE RESULTS ######
 
@@ -59,7 +40,7 @@ fig.savefig('norm_alpha_G.png', bbox_inches = 'tight',dpi = 200)
 plt.show()
 
 ###### SAVE THE CURVES INTO A FILE ########
-file_name = 'norm_sens_vs_alpha_G.txt'
+file_name = 'norm_sens_vs_alpha_G_RE_157.txt'
 header = 'alpha  Re(Gu)    Im(Gu)    Re(Gcd)    Im(Gcd)'
 
 np.savetxt(file_name ,np.transpose([alpha, norm_guRe, norm_guIm, norm_gcdRe, norm_gcdIm]), fmt='%.4e', delimiter=' ', newline='\n', header=header)

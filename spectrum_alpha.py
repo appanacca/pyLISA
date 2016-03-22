@@ -72,7 +72,7 @@ for i in np.arange(len(a)):
     #print idx
     eigv_sel[i] = f.eigv[idx]
 
-    f.adjoint_spectrum('disc')
+    f.adjoint_spectrum('cont')
     f.solve_eig_adj()
     f.save_sim('200_puv_disc')
     om = sn.sensitivity('200_puv_disc.npz', idx)
