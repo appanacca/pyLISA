@@ -713,33 +713,51 @@ class fluid(object):
     def omega_alpha_curves(self, alpha_start, alpha_end, n_step, name_file='omega_alpha'):
         self.vec_alpha = np.linspace(alpha_start, alpha_end, n_step)
         self.vec_eigv_im = np.zeros(n_step)
+        self.vec_eigv_re = np.zeros(n_step)
+
         for i in np.arange(n_step):
             self.set_perturbation(self.vec_alpha[i], self.Re)
             self.set_operator_variables()
             self.solve_eig()
             # self.vec_eigv_im[i] = np.max(self.eigv_im)
 
+            #self.eigv = self.eigv[ (np.real(self.eigv)>0.92) &  (np.real(self.eigv)<1.1)]
+
             self.vec_eigv_im[i] = (self.vec_alpha[i] * np.max(np.imag(self.eigv)))
+            self.vec_eigv_re[i] = (self.vec_alpha[i] * np.real(self.eigv[np.argmax(np.imag(self.eigv))]) )
 
             # print self.eigv_im
-        np.savez('omega_alpha_'+name_file, self.vec_alpha, self.vec_eigv_im)
+        np.savez('omega_alpha_'+name_file, self.vec_alpha, self.vec_eigv_im, self.vec_eigv_re)
 
-        header = 'alpha  omega_i'
-        np.savetxt('omega_alpha_'+name_file+'.txt' ,np.transpose([self.vec_alpha, self.vec_eigv_im]), fmt='%.4e', delimiter=' ', newline='\n', header=header)
+        header = 'alpha  omega_i  omega_r'
+        np.savetxt('omega_alpha_'+name_file+'.txt' ,np.transpose([self.vec_alpha, self.vec_eigv_im, self.vec_eigv_im]), fmt='%.4e', delimiter=' ', newline='\n', header=header)
 
 
-        fig, ay = plt.subplots(dpi=150)
-        lines = ay.plot(self.vec_alpha, self.vec_eigv_im, 'b', lw=2)
-        ay.set_ylabel(r'$\omega_i$', fontsize=32)
-        ay.set_xlabel(r'$\alpha$', fontsize=32)
+        fig = plt.figure(dpi=150)
+        ay1 = fig.add_subplot(111)
+        ay1.plot(self.vec_alpha, self.vec_eigv_im, 'b', lw=2)
+        ay1.set_ylabel(r'$\omega_i$', fontsize=32, color='b')
+        ay1.set_xlabel(r'$\alpha$', fontsize=32)
         # lgd = ay.legend((lines), (r'$U$', r'$\delta U$', r'$\delta^2 U$'),
         #                 loc=3, ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
         # ay.set_ylim([-1, 0.1])
         # ay.set_xlim([0, 1.8])
-        ay.grid()
+        ay1.grid()
+        for tl in ay1.get_yticklabels():
+            tl.set_color('b')
+
+        ay2 = ay1.twinx()
+        ay2.plot(self.vec_alpha, self.vec_eigv_re, 'r', lw=2)
+        ay2.set_ylabel(r'$\omega_r$', fontsize=32, color='r')
+        ay2.grid()
+        for tl in ay2.get_yticklabels():
+                tl.set_color('r')
+
         # plt.tight_layout()
         fig.savefig('omega_alpha_'+name_file+'.png', bbox_inches='tight', dpi=150)
-        plt.show(lines)
+        plt.show()
+
+
 
     def set_perturbation(self, a, Re):
         self.alpha = a

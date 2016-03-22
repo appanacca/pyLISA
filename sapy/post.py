@@ -97,10 +97,10 @@ class viz(object):
             #  for i in np.arange(10):
             self.fig, ay = plt.subplots(figsize=(10, 6), dpi=100)
             plt.subplots_adjust(bottom=0.2)
-            lines = ay.plot(self.eigv_re*self.alpha, self.eigv_im*self.alpha, 'bs', self.eigv_re_adj*self.alpha,
-                    -self.eigv_im_adj*self.alpha, 'ro', markersize=10)
-            ay.set_ylabel(r'$\omega_i$', fontsize=35)
-            ay.set_xlabel(r'$\omega_r$', fontsize=35)
+            lines = ay.plot(self.eigv_re, self.eigv_im, 'bs', self.eigv_re_adj,
+                    -self.eigv_im_adj, 'ro', markersize=10)
+            ay.set_ylabel(r'$c_i$', fontsize=35)
+            ay.set_xlabel(r'$c_r$', fontsize=35)
             # lgd = ay.legend((lines),(r'$U$',r'$\delta U$',r'$\delta^2 U$'),
             #                          loc=3, ncol=3, bbox_to_anchor=(0,1),
             #                          fontsize = 32)
