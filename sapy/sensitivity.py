@@ -152,13 +152,13 @@ class sensitivity(object):
         mpl.rc('xtick', labelsize=25)
         mpl.rc('ytick', labelsize=25)
 
-        fig, ay = plt.subplots(figsize=(10, 10), dpi=100)
+        """fig, ay = plt.subplots(figsize=(10, 10), dpi=100)
         lines = ay.plot(self.perturb, self.y, 'b*', lw=2)
         ay.set_ylabel(r'$y$', fontsize=32)
         ay.set_xlabel(r'$\delta U$', fontsize=32)
         ay.set_ylim([0,5])
         ay.grid()
-        plt.show(lines)
+        plt.show(lines)"""
 
     def c_per(self, obj='u', file_name='sens_fun.out', *args):
         i = (0 + 1j)
@@ -227,8 +227,8 @@ class sensitivity(object):
 
 
             ######## ATTENTION;  HERE I TRANSFORM THE SENSITIVITY FROM delta_C to delta_OMEGA
-            Gu = Gu*self.alpha
-            Gcd = Gcd*self.alpha
+            #Gu = Gu*self.alpha
+            #Gcd = Gcd*self.alpha
 
             np.savetxt(file_name, np.c_[self.y, np.abs(Gu), np.abs(Gcd), np.real(Gu), np.imag(Gu), np.real(Gcd), np.imag(Gcd)],
                             fmt='%1.4e',  header=str(self.option)+'\n'+'\n'+'MAX |Gu|:'+str(np.max(np.abs(Gu)))+'MAX |Gcd|:'+str(np.max(np.abs(Gcd)))+'\n'+'y   |Gu|    |Gcd|    Gu_real     Gu_imag     Gcd_real    Gcd_imag')
@@ -239,7 +239,7 @@ class sensitivity(object):
         mpl.rc('xtick', labelsize=15)
         mpl.rc('ytick', labelsize=15)
 
-        fig, (ay1, ay2) = plt.subplots(1,2, figsize=(10, 10), dpi=100)
+        """fig, (ay1, ay2) = plt.subplots(1,2, figsize=(10, 10), dpi=100)
         lines = ay1.plot(np.real(Gu), self.y, 'r', np.imag(Gu),
                         self.y, 'g', np.abs(Gu), self.y, 'm', lw=2)
         #lines = ay1.plot(np.abs(Gu), self.y, 'm', lw=2)
@@ -257,7 +257,7 @@ class sensitivity(object):
         ay2.set_xlabel(r'$G_{CD}$', fontsize=32)
         ay2.grid()
         ay2.set_ylim([0,5])
-        plt.show(lines)
+        plt.show(lines)"""
 
         if obj == 'norm':
             return lin.norm(np.real(Gu), ord=np.inf), lin.norm(np.imag(Gu), ord=np.inf), lin.norm(np.real(Gcd), ord=np.inf), lin.norm(np.imag(Gcd), ord=np.inf)
@@ -271,18 +271,18 @@ class sensitivity(object):
             delta_c = np.sum((Gu*self.perturb)*self.integ_matrix) + np.sum((Gcd*self.perturb)*self.integ_matrix)
             return delta_c
 
-    def sens_spectrum(self, fig_name, eps=0.00001, gamma=0.007, obj='u',  shape='gauss', *args):
-        y0 = np.linspace(gamma, 1.5-gamma, 50)
+    def sens_spectrum(self, fig_name, amp, gamma , eig_idx,  shape='gauss',  obj='u',  *args):
+        y0 = np.linspace(0, 2, 30)
         it = np.arange(len(y0))
         #pdb.set_trace()
         delta_spectrum = np.zeros(len(y0), dtype=np.complex_)
         delta_spectrum_stab = np.zeros(len(y0), dtype=np.complex_)
 
         for i in it:
-            self.get_perturbation(y0[i], eps, gamma, shape)
+            self.get_perturbation(y0[i], amp, gamma, shape)
             #pdb.set_trace()
             delta_spectrum[i] = self.c_per(obj)
-            delta_spectrum_stab[i] = self.validation(y0[i], eps, gamma, 17)
+            delta_spectrum_stab[i] = self.validation(y0[i], amp,  gamma, eig_idx, shape)
 
             print 'perturbation centre: ', y0[i]
 

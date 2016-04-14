@@ -5,12 +5,12 @@ import pdb as pdb
 import numpy as np
 
 option = {'flow': 'DATA/G.txt',
-          'n_points': 200,
+          'n_points': 300,
           'lc': 0.16739,
           'Ymax': 1000,
           'yi': 5,
-          'alpha': 0.9,  #0.56552
-          'Re': 1e5,   #157.922677   #1e5
+          'alpha': 0.55,  #0.56552
+          'Re': 157.922677,   #157.922677   #1e5
           'variables': 'p_u_v',
           'equation': 'LNS_CD',
           'mapping': ['semi_infinite_PB', [0, (46.7/13.8)]],
@@ -47,15 +47,15 @@ v = po.viz('200_puv_disc.npz')
 v.plot_velocity()
 v.plot_spectrum()
 
-f.omega_alpha_curves(0.1, 1, 20, 'G_RE_1e5')
+#f.omega_alpha_curves(0.1, 1, 20, 'G_RE_1e5')
 
 idx = np.argmax(np.imag(f.eigv))
 om = sn.sensitivity('200_puv_disc.npz', idx)
 a, b, c, d = om.c_per(obj='norm')
 print a, b, c,d
 
-#om.sens_spectrum('ke_cd_N001_puv.png', 1e-3, 1e-2, obj='u', shape='sin') # eps, gamma
-#om.validation(1, 1e-2, 1, 17, 'tanh')
+om.sens_spectrum('ke_cd_N001_puv.png', 1e-7, 1e-4, 189, obj='u', shape='gauss') # eps, gamma
+#om.validation(2, 1e-7, 1e-4, 189, 'gauss')
 
 
 
