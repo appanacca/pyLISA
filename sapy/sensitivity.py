@@ -180,20 +180,20 @@ class sensitivity(object):
             #normaliz = np.sum(self.integ_matrix*f_norm)
             #print normaliz
 
-            Gu = (v_adj_conj * np.dot((self.D[1] - I*self.alpha**2),v) -
-                  np.dot(self.D[1],v*v_adj_conj) -
-                  (i/self.alpha) *np.dot(self.D[0], v_adj_conj) * np.dot(self.D[0],  v) * self.aCD)
+            #self.Gu = (v_adj_conj * np.dot((self.D[1] - I*self.alpha**2),v) -
+            #      np.dot(self.D[1],v*v_adj_conj) -
+            #      (i/self.alpha) *np.dot(self.D[0], v_adj_conj) * np.dot(self.D[0],  v) * self.aCD)
             dv_adj = np.gradient(v_adj_conj) / np.gradient(self.y)
             vv = v*v_adj_conj
             d_vv = np.gradient(vv) / np.gradient(self.y)
             dd_vv = np.gradient(d_vv) / np.gradient(self.y)
 
-            Gu = (v_adj_conj * np.dot((self.D[1] - I*self.alpha**2),v) -
+            self.Gu = (v_adj_conj * np.dot((self.D[1] - I*self.alpha**2),v) -
                   dd_vv - (i/self.alpha) * dv_adj * np.dot(self.D[0],  v) * self.aCD)
 
-            #Gu = (v_adj_conj * np.dot((self.D[1] - I*self.alpha**2),v)) -np.dot(self.D[1],v*v_adj_conj)
+            #self.Gu = (v_adj_conj * np.dot((self.D[1] - I*self.alpha**2),v)) -np.dot(self.D[1],v*v_adj_conj)
 
-            Gcd = -(i/self.alpha)*np.dot(self.D[0], v_adj_conj) * np.dot(self.D[0],
+            self.Gcd = -(i/self.alpha)*np.dot(self.D[0], v_adj_conj) * np.dot(self.D[0],
                 v) * self.U * 0.552  # sarebbe a* da cambiare tutta
                                      # l'intefaccia per separare CD ed aCD
 
@@ -219,30 +219,30 @@ class sensitivity(object):
 
             d_uv = np.gradient(v*u_adj_conj) / np.gradient(self.y)
 
-            Gu = ((-i/self.alpha)*self.aCD*u*u_adj_conj +
+            self.Gu = ((-i/self.alpha)*self.aCD*u*u_adj_conj +
                     (i/self.alpha)*d_uv #np.dot(self.D[0], v*u_adj_conj)
                     +v*v_adj_conj +u*u_adj_conj)/normaliz
 
-            Gcd = ((-(i*0.552)/self.alpha)*self.U*u*u_adj_conj)/normaliz
+            self.Gcd = ((-(i*0.552)/self.alpha)*self.U*u*u_adj_conj)/normaliz
 
 
             ######## ATTENTION;  HERE I TRANSFORM THE SENSITIVITY FROM delta_C to delta_OMEGA
-            #Gu = Gu*self.alpha
-            #Gcd = Gcd*self.alpha
+            #self.Gu = self.Gu*self.alpha
+            #self.Gcd = self.Gcd*self.alpha
 
-            np.savetxt(file_name, np.c_[self.y, np.abs(Gu), np.abs(Gcd), np.real(Gu), np.imag(Gu), np.real(Gcd), np.imag(Gcd)],
-                            fmt='%1.4e',  header=str(self.option)+'\n'+'\n'+'MAX |Gu|:'+str(np.max(np.abs(Gu)))+'MAX |Gcd|:'+str(np.max(np.abs(Gcd)))+'\n'+'y   |Gu|    |Gcd|    Gu_real     Gu_imag     Gcd_real    Gcd_imag')
+            np.savetxt(file_name, np.c_[self.y, np.abs(self.Gu), np.abs(self.Gcd), np.real(self.Gu), np.imag(self.Gu), np.real(self.Gcd), np.imag(self.Gcd)],
+                            fmt='%1.4e',  header=str(self.option)+'\n'+'\n'+'MAX |self.Gu|:'+str(np.max(np.abs(self.Gu)))+'MAX |self.Gcd|:'+str(np.max(np.abs(self.Gcd)))+'\n'+'y   |self.Gu|    |self.Gcd|    self.Gu_real     self.Gu_imag     self.Gcd_real    self.Gcd_imag')
 
 
-        phase_Gu = np.arctan(np.imag(Gu)/np.real(Gu))
+        phase_Gu = np.arctan(np.imag(self.Gu)/np.real(self.Gu))
 
         mpl.rc('xtick', labelsize=15)
         mpl.rc('ytick', labelsize=15)
 
-        """fig, (ay1, ay2) = plt.subplots(1,2, figsize=(10, 10), dpi=100)
-        lines = ay1.plot(np.real(Gu), self.y, 'r', np.imag(Gu),
-                        self.y, 'g', np.abs(Gu), self.y, 'm', lw=2)
-        #lines = ay1.plot(np.abs(Gu), self.y, 'm', lw=2)
+        fig, (ay1, ay2) = plt.subplots(1,2, figsize=(10, 10), dpi=100)
+        lines = ay1.plot(np.real(self.Gu), self.y, 'r', np.imag(self.Gu),
+                        self.y, 'g', np.abs(self.Gu), self.y, 'm', lw=2)
+        #lines = ay1.plot(np.abs(self.Gu), self.y, 'm', lw=2)
         ay1.set_ylabel(r'$y$', fontsize=32)
         ay1.set_xlabel(r'$G_U$', fontsize=32)
         lgd = ay1.legend((lines), (r'$Re$', r'$Im$', r'$Mod$' ), loc=3,
@@ -250,25 +250,25 @@ class sensitivity(object):
         ay1.set_ylim([0,5])
         ay1.grid()
 
-        lines = ay2.plot(np.real(Gcd), self.y, 'r', np.imag(Gcd),
-                        self.y, 'g', np.abs(Gcd), self.y, 'm', lw=2)
-        #lines = ay2.plot(np.abs(Gcd), self.y, 'm', lw=2)
+        lines = ay2.plot(np.real(self.Gcd), self.y, 'r', np.imag(self.Gcd),
+                        self.y, 'g', np.abs(self.Gcd), self.y, 'm', lw=2)
+        #lines = ay2.plot(np.abs(self.Gcd), self.y, 'm', lw=2)
         ay2.set_ylabel(r'$y$', fontsize=32)
         ay2.set_xlabel(r'$G_{CD}$', fontsize=32)
         ay2.grid()
         ay2.set_ylim([0,5])
-        plt.show(lines)"""
+        plt.show(lines)
 
         if obj == 'norm':
-            return lin.norm(np.real(Gu), ord=np.inf), lin.norm(np.imag(Gu), ord=np.inf), lin.norm(np.real(Gcd), ord=np.inf), lin.norm(np.imag(Gcd), ord=np.inf)
+            return lin.norm(np.real(self.Gu), ord=np.inf), lin.norm(np.imag(self.Gu), ord=np.inf), lin.norm(np.real(self.Gcd), ord=np.inf), lin.norm(np.imag(self.Gcd), ord=np.inf)
         elif obj == 'u':
-            delta_c = np.sum((Gu*self.perturb)*self.integ_matrix)  # +((+i/self.alpha)*v_adj_conj*d_p)*self.integ_matrix)
+            delta_c = np.sum((self.Gu*self.perturb)*self.integ_matrix)  # +((+i/self.alpha)*v_adj_conj*d_p)*self.integ_matrix)
             return delta_c
         elif obj == 'cd':
-            delta_c = np.sum((Gcd*self.perturb)*self.integ_matrix)
+            delta_c = np.sum((self.Gcd*self.perturb)*self.integ_matrix)
             return delta_c
         elif obj == 'all':
-            delta_c = np.sum((Gu*self.perturb)*self.integ_matrix) + np.sum((Gcd*self.perturb)*self.integ_matrix)
+            delta_c = np.sum((self.Gu*self.perturb)*self.integ_matrix) + np.sum((self.Gcd*self.perturb)*self.integ_matrix)
             return delta_c
 
     def sens_spectrum(self, fig_name, amp, gamma , eig_idx,  shape='gauss',  obj='u',  *args):

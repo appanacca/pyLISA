@@ -151,7 +151,7 @@ class fluid(object):
 
             # DERIVATIVE OF THE MAPPING FUNCTION, NEEDED FOR THE QUADRATURE
             # MATRIX
-            map_integral = 8*L/(-(self.y + 1)**2 + 4)**(3/2)
+            map_integral = 8*L/(-(self.y + 1)**2 + 4)**(3./2.)
             map_integral[0] = map_integral[1]*10
 
             self.y = (L*(s+1))/(np.sqrt((1 - ((s+1)**2)/4)))
