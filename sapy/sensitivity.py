@@ -7,19 +7,18 @@ Created on Mon May 19 00:37:38 2014
 
 """
 
-from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
 import sys as sys
-import chebdif as cb
-import clencurt as cc_int
+import sapy.chebdif as cb
+import sapy.clencurt as cc_int
 
 import scipy.linalg as lin
 import scipy.interpolate as intp
 
 import scipy.io
 
-import blasius as bl
+import sapy.blasius as bl
 import numba as nb
 
 import bokeh.plotting as bkpl
@@ -178,7 +177,7 @@ class sensitivity(object):
             # TEST FOR NORMALIZATION
             #f_norm = (v_adj_conj * np.dot((self.D[1] - self.alpha**2),v))
             #normaliz = np.sum(self.integ_matrix*f_norm)
-            #print normaliz
+            #print (normaliz)
 
             #self.Gu = (v_adj_conj * np.dot((self.D[1] - I*self.alpha**2),v) -
             #      np.dot(self.D[1],v*v_adj_conj) -
@@ -284,7 +283,7 @@ class sensitivity(object):
             delta_spectrum[i] = self.c_per(obj)
             delta_spectrum_stab[i] = self.validation(y0[i], amp,  gamma, eig_idx, shape)
 
-            print 'perturbation centre: ', y0[i]
+            print ('perturbation centre: ', y0[i])
 
         re = np.real(delta_spectrum) + np.real(self.eigv[self.idx])
         im = np.imag(delta_spectrum) + np.imag(self.eigv[self.idx])
@@ -373,12 +372,12 @@ class sensitivity(object):
         idx_new = np.argmax(eigv_im)
         eigv_new = f.eigv[idx_new]
 
-        print 'new:', eigv_new
-        print 'old:', self.eigv[eig_idx]
-        print 'diff:', eigv_new-self.eigv[eig_idx]
+        print ('new:', eigv_new)
+        print ('old:', self.eigv[eig_idx])
+        print ('diff:', eigv_new-self.eigv[eig_idx])
 
         #self.get_perturbation(pos, amp, gamma)
-        print 'adj:', self.c_per()
-        print 'diff %', np.real((eigv_new-self.eigv[eig_idx]) -self.c_per())/np.real(self.c_per()) *100, np.imag((eigv_new-self.eigv[eig_idx]) -self.c_per())/np.imag(self.c_per()) *100
+        print ('adj:', self.c_per())
+        print ('diff %', np.real((eigv_new-self.eigv[eig_idx]) -self.c_per())/np.real(self.c_per()) *100, np.imag((eigv_new-self.eigv[eig_idx]) -self.c_per())/np.imag(self.c_per()) *100)
 
-        return eigv_new
+        return( eigv_new)

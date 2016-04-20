@@ -36,9 +36,9 @@ def blasius(y_gl):
 			f1[j+1] = f1[j] + f2[j]*dn
 			f2[j+1] = f2[j] - 0.5*f[j]*f2[j]*dn
 		if f1[-1] >= 1.0:
-			print 'Final value of f1: ',f1[-1]
-			print 'Chosen value of f2[0]: ', f2[0]
-			print 'Number of guesses: ', i
+			print ('Final value of f1: ',f1[-1])
+			print ('Chosen value of f2[0]: ', f2[0])
+			print ('Number of guesses: ', i)
 			break
 	v = (0.5*(f1*n - f))
 	# plotting x-component of velocity
@@ -81,9 +81,9 @@ def blasius(y_gl):
 		f2guess[i+1] = f2guess[i] - ((f1[-1]-1)/f4[-1])
 
 		if abs(f1[-1]-1)<=error_bound:
-			print 'Final value of f1: ',f1[-1]
-			print 'Chosen value of f2[0]: ', f2[0]
-			print 'Number of guesses: ', i
+			print ('Final value of f1: ',f1[-1])
+			print ('Chosen value of f2[0]: ', f2[0])
+			print( 'Number of guesses: ', i)
 			break
 
 	u=f1

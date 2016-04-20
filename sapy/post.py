@@ -7,17 +7,16 @@ Created on Mon May 19 00:37:38 2014
 
 """
 
-from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
 import sys as sys
-import chebdif as cb
+import sapy.chebdif as cb
 import scipy.linalg as lin
 import scipy.interpolate as intp
 
 import scipy.io
 
-import blasius as bl
+import sapy.blasius as bl
 import numba as nb
 
 import bokeh.plotting as bkpl
@@ -144,9 +143,9 @@ class viz(object):
             adj_c_picked = self.eigv_adj[adj_n]
 
             self.eigfun_picked = self.eigf[:, n]
-            print c_picked  # , lin.norm(self.eigfun_picked)
-            print adj_c_picked
-            print n
+            print (c_picked)  # , lin.norm(self.eigfun_picked)
+            print (adj_c_picked)
+            print (n)
 
             if self.option['variables'] == 'v_eta':
                 # needed in the case "Euler_wave" because only the half of the

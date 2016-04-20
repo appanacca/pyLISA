@@ -7,19 +7,18 @@ Created on Mon May 19 00:37:38 2014
 
 """
 
-from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
 import sys as sys
-import chebdif as cb
-import clencurt as cc_int
+import sapy.chebdif as cb
+import sapy.clencurt as cc_int
 import scipy.linalg as lin
 import scipy.sparse.linalg as lins
 import scipy.interpolate as intp
 
 import scipy.io
 
-import blasius as bl
+import sapy.blasius as bl
 import numba as nb
 
 import bokeh.plotting as bkpl
@@ -268,7 +267,7 @@ class fluid(object):
                     - (i/self.alpha) * (dCD*U*D1 + CD*dU*D1 + CD*U*D2)
             self.B = delta
         elif self.option['equation'] == 'Euler_CD_turb':
-            print "not implemented yet"
+            print ("not implemented yet")
         elif self.option['equation'] == 'LNS':
             self.A = (i/(self.alpha*self.Re)) *\
                     (D4 +I*self.alpha**4 -2*self.alpha**2 *D2)\
@@ -281,9 +280,9 @@ class fluid(object):
                     (dCD*U*D1 + CD*dU*D1 + CD*U*D2)
             self.B = delta
         elif self.option['equation'] == 'LNS_turb':
-            print "not implemented yet"
+            print ("not implemented yet")
         elif self.option['equation'] == 'LNS_turb_CD':
-            print "not implemented yet"
+            print ("not implemented yet")
         elif self.option['equation'] == 'Euler_wave':
             # in this case the B.C. is of 2nd order in omega so the matrix
             # problem should be reorganized see the article of Jerome
@@ -311,15 +310,15 @@ class fluid(object):
         elif self.option['equation'] == 'Euler_CD':
             self.BC2()
         elif self.option['equation'] == 'Euler_CD_turb':
-            print "not implemented yet"
+            print ("not implemented yet")
         elif self.option['equation'] == 'LNS':
             self.BC1()
         elif self.option['equation'] == 'LNS_CD':
             self.BC1()
         elif self.option['equation'] == 'LNS_turb':
-            print "not implemented yet"
+            print ("not implemented yet")
         elif self.option['equation'] == 'LNS_turb_CD':
-            print "not implemented yet"
+            print ("not implemented yet")
         elif self.option['equation'] == 'Euler_wave':
             self.BC_wave_v_eta()
 
@@ -507,7 +506,7 @@ class fluid(object):
         self.A[2*self.N, 2*self.N] = 1
         self.A[3*self.N - 1, 3*self.N - 1] = 1
 
-        # print self.A, self.B
+        # print (self.A, self.B)
 
     def BC_LNS_neu_v(self):
         idx_bc = np.array([2*self.N, 3*self.N - 1])
@@ -517,7 +516,7 @@ class fluid(object):
         self.A[2*self.N, 2*self.N] = 1
         self.A[3*self.N - 1, 3*self.N - 1] = 1
 
-        #  print self.A, self.B
+        #  print (self.A, self.B)
 
     def BC_LNS_wave(self):
         idx_bc = np.array([2*self.N, 3*self.N - 1])
@@ -726,7 +725,7 @@ class fluid(object):
             self.vec_eigv_im[i] = (self.vec_alpha[i] * np.max(np.imag(self.eigv)))
             self.vec_eigv_re[i] = (self.vec_alpha[i] * np.real(self.eigv[np.argmax(np.imag(self.eigv))]) )
 
-            # print self.eigv_im
+            # print (self.eigv_im)
         np.savez('omega_alpha_'+name_file, self.vec_alpha, self.vec_eigv_im, self.vec_eigv_re)
 
         header = 'alpha  omega_i  omega_r'
@@ -826,8 +825,19 @@ class fluid(object):
         bkpl.show(p)
 
     def save_sim(self, file_name):
-        np.savez(file_name, sim_param_keys=np.array(self.option.keys()),
-                 sim_param_values=np.array(self.option.values(), dtype=object),
+        KEYS = []
+        VALUES = []
+
+        for i in self.option.keys():
+            KEYS.append(i)
+        for i in self.option.values():
+            VALUES.append(i)
+
+        KEYS = np.array(KEYS)
+        VALUES = np.array(VALUES, dtype=object)
+
+        np.savez(file_name, sim_param_keys=KEYS,
+                 sim_param_values=VALUES,
                  U=self.U, dU=self.dU, y=self.y,
                  ddU=self.ddU, aCD=self.aCD, daCD=self.daCD,
                  eigv=self.eigv, eigf=self.eigf, D=self.D,
@@ -845,4 +855,4 @@ class fluid(object):
         v = lin.solve(H_adj, y)
         J2 = np.dot(v, u)
 
-        print J1, J2
+        print (J1, J2)

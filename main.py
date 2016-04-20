@@ -52,7 +52,7 @@ v.plot_spectrum()
 idx = np.argmax(np.imag(f.eigv))
 om = sn.sensitivity('NOvisc_puv_cont.npz', idx)
 a, b, c, d = om.c_per(obj='norm')
-print a, b, c,d
+print (a, b, c,d)
 
 #om.sens_spectrum('ke_cd_N001_puv.png', 1e-7, 1e-4, 189, obj='u', shape='gauss') # eps, gamma
 om.validation(1, 1e-7, 1e-4, 69, 'gauss')
