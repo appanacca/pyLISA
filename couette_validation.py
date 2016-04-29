@@ -15,13 +15,13 @@ import pdb as pdb
 # In[2]:
 
 option = {'flow': 'couette',
-          'n_points': 200,
+          'n_points': 80,
           'lc': 0.16739,
           'Ymax': 1000,
           'yi': 10,
           'alpha': 1.5,
           'Re': 500,
-          'variables': 'v_eta',
+          'variables': 'p_u_v',
           'equation': 'LNS',
           'mapping': ['semi_infinite_PB', [0, (46.7/13.8)]],
           'Froude': 0.02,
@@ -38,26 +38,24 @@ f.integ_matrix()
 f.set_operator_variables()
 
 f.solve_eig()
-f.adjoint_spectrum_v_eta('disc')
+f.adjoint_spectrum('cont')
 f.solve_eig_adj()
 
-f.save_sim('cou_disc')
-f.check_adj()
+f.save_sim('cou_cont')
 
 
 # In[4]:
 
-v = po.viz('cou_disc.npz')
+v = po.viz('cou_cont.npz')
 v.plot_velocity()
 v.plot_spectrum()
 
 
 # In[5]:
+# 56 62 73
+om = sn.sensitivity('cou_cont.npz', 73)
+a, b, c, d = om.c_per(obj='norm')
+print (a, b, c,d)
 
-om = sn.sensitivity(0.00001, 'cou_disc.npz', 181)
-#om.u_pert(0.4, 0.2)
-#om.cd_pert(0.5, 0.1)
-#om.c_per()
-
-#om.sens_spectrum('ke_u_N01_ve.png', per_variab='u')
-om.validation(0, 0.01, 181)
+#om.sens_spectrum('ke_cd_N001_puv.png', 1e-7, 1e-4, 189, obj='u', shape='gauss') # eps, gamma
+om.validation(1, 1e-7, 1e-4, 69, 'gauss')

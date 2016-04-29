@@ -729,7 +729,7 @@ class fluid(object):
         np.savez('omega_alpha_'+name_file, self.vec_alpha, self.vec_eigv_im, self.vec_eigv_re)
 
         header = 'alpha  omega_i  omega_r'
-        np.savetxt('omega_alpha_'+name_file+'.txt' ,np.transpose([self.vec_alpha, self.vec_eigv_im, self.vec_eigv_im]), fmt='%.4e', delimiter=' ', newline='\n', header=header)
+        np.savetxt('omega_alpha_'+name_file+'.txt' ,np.transpose([self.vec_alpha, self.vec_eigv_im, self.vec_eigv_re]), fmt='%.4e', delimiter=' ', newline='\n', header=header)
 
 
         fig = plt.figure(dpi=150)

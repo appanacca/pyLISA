@@ -238,7 +238,7 @@ class sensitivity(object):
         mpl.rc('xtick', labelsize=15)
         mpl.rc('ytick', labelsize=15)
 
-        fig, (ay1, ay2) = plt.subplots(1,2, figsize=(10, 10), dpi=100)
+        """fig, (ay1, ay2) = plt.subplots(1,2, figsize=(10, 10), dpi=100)
         lines = ay1.plot(np.real(self.Gu), self.y, 'r', np.imag(self.Gu),
                         self.y, 'g', np.abs(self.Gu), self.y, 'm', lw=2)
         #lines = ay1.plot(np.abs(self.Gu), self.y, 'm', lw=2)
@@ -256,7 +256,7 @@ class sensitivity(object):
         ay2.set_xlabel(r'$G_{CD}$', fontsize=32)
         ay2.grid()
         ay2.set_ylim([0,5])
-        plt.show(lines)
+        plt.show(lines)"""
 
         if obj == 'norm':
             return lin.norm(np.real(self.Gu), ord=np.inf), lin.norm(np.imag(self.Gu), ord=np.inf), lin.norm(np.real(self.Gcd), ord=np.inf), lin.norm(np.imag(self.Gcd), ord=np.inf)
