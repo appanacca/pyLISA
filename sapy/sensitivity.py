@@ -60,6 +60,7 @@ class sensitivity(object):
         self.eigf_adj = data['adj_eigf']
         self.alpha = self.option['alpha']
 
+        self.a_ast = self.option['a_ast']
         self.integ_matrix = data['integ_matrix']
 
         self.idx = idx   # idx is the index of the eigenvalue
@@ -193,7 +194,7 @@ class sensitivity(object):
             #self.Gu = (v_adj_conj * np.dot((self.D[1] - I*self.alpha**2),v)) -np.dot(self.D[1],v*v_adj_conj)
 
             self.Gcd = -(i/self.alpha)*np.dot(self.D[0], v_adj_conj) * np.dot(self.D[0],
-                v) * self.U * 0.552  # sarebbe a* da cambiare tutta
+                v) * self.U * self.a_ast  # sarebbe a* da cambiare tutta
                                      # l'intefaccia per separare CD ed aCD
 
 
@@ -222,7 +223,7 @@ class sensitivity(object):
                     (i/self.alpha)*d_uv #np.dot(self.D[0], v*u_adj_conj)
                     +v*v_adj_conj +u*u_adj_conj)/normaliz
 
-            self.Gcd = ((-(i*0.552)/self.alpha)*self.U*u*u_adj_conj)/normaliz
+            self.Gcd = ((-(i*self.ast)/self.alpha)*self.U*u*u_adj_conj)/normaliz
 
 
             ######## ATTENTION;  HERE I TRANSFORM THE SENSITIVITY FROM delta_C to delta_OMEGA
@@ -238,7 +239,7 @@ class sensitivity(object):
         mpl.rc('xtick', labelsize=15)
         mpl.rc('ytick', labelsize=15)
 
-        """fig, (ay1, ay2) = plt.subplots(1,2, figsize=(10, 10), dpi=100)
+        fig, (ay1, ay2) = plt.subplots(1,2, figsize=(10, 10), dpi=100)
         lines = ay1.plot(np.real(self.Gu), self.y, 'r', np.imag(self.Gu),
                         self.y, 'g', np.abs(self.Gu), self.y, 'm', lw=2)
         #lines = ay1.plot(np.abs(self.Gu), self.y, 'm', lw=2)
@@ -256,7 +257,7 @@ class sensitivity(object):
         ay2.set_xlabel(r'$G_{CD}$', fontsize=32)
         ay2.grid()
         ay2.set_ylim([0,5])
-        plt.show(lines)"""
+        plt.show(lines)
 
         if obj == 'norm':
             return lin.norm(np.real(self.Gu), ord=np.inf), lin.norm(np.imag(self.Gu), ord=np.inf), lin.norm(np.real(self.Gcd), ord=np.inf), lin.norm(np.imag(self.Gcd), ord=np.inf)

@@ -1,4 +1,4 @@
-# {'yi': 5, 'equation': 'LNS_CD', 'flow': 'DATA/G.txt', 'mapping': ['semi_infinite_PB', [0, 3.3840579710144927]], 'Re': 157.922677, 'Froude': 0.02, 'lc': 0.16739, 'Ymax': 1000, 'variables': 'p_u_v', 'n_points': 300, 'alpha': 0.56552, 'slope': 1.3e-05}
+# {'yi': 5, 'lc': 0.16739, 'flow': 'DATA/G.txt', 'Ymax': 1000, 'n_points': 300, 'a_ast': 0.552, 'Froude': 0.02, 'mapping': ['semi_infinite_PB', [0, 3.3840579710144927]], 'slope': 1.3e-05, 'alpha': 0.56552, 'Re': 157.922677, 'equation': 'LNS_CD', 'variables': 'p_u_v'}
 # eigv_re    eigv_im    eigv_re_adj    eigv_im_adj
 2.3499e-01 -1.7367e+05 2.3499e-01 1.7367e+05
 2.3499e-01 -3.0116e+04 2.3499e-01 3.0116e+04

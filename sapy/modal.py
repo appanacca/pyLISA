@@ -44,6 +44,7 @@ class fluid(object):
         self.alpha = option['alpha']
         self.Re = option['Re']
 
+        self.a_ast = option['a_ast']
         self.Fr = option['Froude']
         self.slope = option['slope']
 
@@ -709,7 +710,7 @@ class fluid(object):
 
 
     @nb.jit
-    def omega_alpha_curves(self, alpha_start, alpha_end, n_step, name_file='omega_alpha'):
+    def omega_alpha_curves(self, alpha_start, alpha_end, n_step, left_B, right_B, name_file='omega_alpha', *args):
         self.vec_alpha = np.linspace(alpha_start, alpha_end, n_step)
         self.vec_eigv_im = np.zeros(n_step)
         self.vec_eigv_re = np.zeros(n_step)
@@ -720,12 +721,11 @@ class fluid(object):
             self.solve_eig()
             # self.vec_eigv_im[i] = np.max(self.eigv_im)
 
-            #self.eigv = self.eigv[ (np.real(self.eigv)>0.92) &  (np.real(self.eigv)<1.1)]
+            self.eigv = self.eigv[ (np.real(self.eigv)>left_B) &  (np.real(self.eigv)<right_B)]
 
             self.vec_eigv_im[i] = (self.vec_alpha[i] * np.max(np.imag(self.eigv)))
             self.vec_eigv_re[i] = (self.vec_alpha[i] * np.real(self.eigv[np.argmax(np.imag(self.eigv))]) )
 
-            # print (self.eigv_im)
         np.savez('omega_alpha_'+name_file, self.vec_alpha, self.vec_eigv_im, self.vec_eigv_re)
 
         header = 'alpha  omega_i  omega_r'
@@ -842,7 +842,8 @@ class fluid(object):
                  ddU=self.ddU, aCD=self.aCD, daCD=self.daCD,
                  eigv=self.eigv, eigf=self.eigf, D=self.D,
                  adj_eigv=self.eigv_adj, adj_eigf=self.eigf_adj,
-                 integ_matrix=self.integ_matrix, alpha=self.alpha, Re=self.Re, flow=self.option['flow'])
+                 integ_matrix=self.integ_matrix, alpha=self.alpha,
+                 a_ast=self.a_ast, Re=self.Re, flow=self.option['flow'])
 
     def check_adj(self):
         H = (self.A - self.eigv[16]*self.B)
