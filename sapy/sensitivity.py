@@ -38,11 +38,12 @@ class sensitivity(object):
     """ these class compute the sensitivity of the spectrum
     due to changes in the velocity profile or the drag coefficient"""
 
-    def __init__(self, in_data, idx, per_U_heigth=5, per_cd_heigth=1, *args):
+    def __init__(self, in_data, idx, per_U_heigth=5, per_cd_heigth=1, show_f = True, *args):
         # here above, eps is the maximum norm of the disturb
 
         # as input needs the in_data.npz with the simulation results
-        data = np.load(in_data)
+        data = np.load(in_data+".npz")
+        self.file_name = in_data
         self.Re = data['Re']
         self.y = data['y']
         self.U = data['U']
@@ -67,6 +68,9 @@ class sensitivity(object):
         # which is the one who want to compute the sensitivity
         # the idx should be find with the bokeh plot or the
         # plot spectrum function
+
+
+        self.show_f = show_f
 
         self.distribution_ky = np.linspace(0.001, 10, 1000)
         # rnd.choice() give a float between [-eps,+eps]
@@ -223,41 +227,42 @@ class sensitivity(object):
                     (i/self.alpha)*d_uv #np.dot(self.D[0], v*u_adj_conj)
                     +v*v_adj_conj +u*u_adj_conj)/normaliz
 
-            self.Gcd = ((-(i*self.ast)/self.alpha)*self.U*u*u_adj_conj)/normaliz
+            self.Gcd = ((-(i*self.a_ast)/self.alpha)*self.U*u*u_adj_conj)/normaliz
 
 
             ######## ATTENTION;  HERE I TRANSFORM THE SENSITIVITY FROM delta_C to delta_OMEGA
             #self.Gu = self.Gu*self.alpha
             #self.Gcd = self.Gcd*self.alpha
 
-            np.savetxt(file_name, np.c_[self.y, np.abs(self.Gu), np.abs(self.Gcd), np.real(self.Gu), np.imag(self.Gu), np.real(self.Gcd), np.imag(self.Gcd)],
+            np.savetxt(self.file_name+"_green"+".txt", np.c_[self.y, np.abs(self.Gu), np.abs(self.Gcd), np.real(self.Gu), np.imag(self.Gu), np.real(self.Gcd), np.imag(self.Gcd)],
                             fmt='%1.4e',  header=str(self.option)+'\n'+'\n'+'MAX |self.Gu|:'+str(np.max(np.abs(self.Gu)))+'MAX |self.Gcd|:'+str(np.max(np.abs(self.Gcd)))+'\n'+'y   |self.Gu|    |self.Gcd|    self.Gu_real     self.Gu_imag     self.Gcd_real    self.Gcd_imag')
 
 
-        phase_Gu = np.arctan(np.imag(self.Gu)/np.real(self.Gu))
+        if(self.show_f == True):
+            phase_Gu = np.arctan(np.imag(self.Gu)/np.real(self.Gu))
 
-        mpl.rc('xtick', labelsize=15)
-        mpl.rc('ytick', labelsize=15)
+            mpl.rc('xtick', labelsize=15)
+            mpl.rc('ytick', labelsize=15)
 
-        fig, (ay1, ay2) = plt.subplots(1,2, figsize=(10, 10), dpi=100)
-        lines = ay1.plot(np.real(self.Gu), self.y, 'r', np.imag(self.Gu),
-                        self.y, 'g', np.abs(self.Gu), self.y, 'm', lw=2)
-        #lines = ay1.plot(np.abs(self.Gu), self.y, 'm', lw=2)
-        ay1.set_ylabel(r'$y$', fontsize=32)
-        ay1.set_xlabel(r'$G_U$', fontsize=32)
-        lgd = ay1.legend((lines), (r'$Re$', r'$Im$', r'$Mod$' ), loc=3,
-                                 ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
-        ay1.set_ylim([0,5])
-        ay1.grid()
+            fig, (ay1, ay2) = plt.subplots(1,2, figsize=(10, 10), dpi=100)
+            lines = ay1.plot(np.real(self.Gu), self.y, 'r', np.imag(self.Gu),
+                            self.y, 'g', np.abs(self.Gu), self.y, 'm', lw=2)
+            #lines = ay1.plot(np.abs(self.Gu), self.y, 'm', lw=2)
+            ay1.set_ylabel(r'$y$', fontsize=32)
+            ay1.set_xlabel(r'$G_U$', fontsize=32)
+            lgd = ay1.legend((lines), (r'$Re$', r'$Im$', r'$Mod$' ), loc=3,
+                                     ncol=3, bbox_to_anchor=(0, 1), fontsize=32)
+            ay1.set_ylim([0,5])
+            ay1.grid()
 
-        lines = ay2.plot(np.real(self.Gcd), self.y, 'r', np.imag(self.Gcd),
-                        self.y, 'g', np.abs(self.Gcd), self.y, 'm', lw=2)
-        #lines = ay2.plot(np.abs(self.Gcd), self.y, 'm', lw=2)
-        ay2.set_ylabel(r'$y$', fontsize=32)
-        ay2.set_xlabel(r'$G_{CD}$', fontsize=32)
-        ay2.grid()
-        ay2.set_ylim([0,5])
-        plt.show(lines)
+            lines = ay2.plot(np.real(self.Gcd), self.y, 'r', np.imag(self.Gcd),
+                            self.y, 'g', np.abs(self.Gcd), self.y, 'm', lw=2)
+            #lines = ay2.plot(np.abs(self.Gcd), self.y, 'm', lw=2)
+            ay2.set_ylabel(r'$y$', fontsize=32)
+            ay2.set_xlabel(r'$G_{CD}$', fontsize=32)
+            ay2.grid()
+            ay2.set_ylim([0,5])
+            plt.show(lines)
 
         if obj == 'norm':
             return lin.norm(np.real(self.Gu), ord=np.inf), lin.norm(np.imag(self.Gu), ord=np.inf), lin.norm(np.real(self.Gcd), ord=np.inf), lin.norm(np.imag(self.Gcd), ord=np.inf)

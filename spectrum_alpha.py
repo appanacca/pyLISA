@@ -32,7 +32,7 @@ f.superpose_spectrum(0.1, 1, 10)
 
 """
 
-a = np.linspace(0.4, 0.7, 10)
+a = np.linspace(0.1, 0.5, 9)
 #c = np.arange(0.1, 1.1, 0.02)
 #b = np.arange(1.1, 4.1, 0.1)
 #a = np.concatenate((c,b))
@@ -46,13 +46,14 @@ norm_gcdIm = np.zeros(len(a))
 
 for i in np.arange(len(a)):
 
-    option = {'flow': 'DATA/G.txt',
+    option = {'flow': 'DATA/H.txt',
+              'a_ast': 1.104,
               'n_points': 300,
               'lc': 0.16739,
               'Ymax': 1000,
               'yi': 10,
               'alpha': a[i],
-              'Re': 157.922677,
+              'Re': 1e5,
               'variables': 'p_u_v',
               'equation': 'LNS_CD',
               'mapping': ['semi_infinite_PB', [0, (46.7/13.8)]],
@@ -74,11 +75,17 @@ for i in np.arange(len(a)):
 
     f.adjoint_spectrum('cont')
     f.solve_eig_adj()
-    f.save_sim('200_puv_disc')
-    om = sn.sensitivity('200_puv_disc.npz', idx)
+    f.save_sim("temp")
+    om = sn.sensitivity("temp", idx, show_f=False)
     norm_guRe[i], norm_guIm[i], norm_gcdRe[i], norm_gcdIm[i] = om.c_per(obj='norm')
 
-np.savez('norm_alpha_G_300_RE_157', alpha=a, norm_guRe=norm_guRe, norm_guIm=norm_guIm, norm_gcdRe=norm_gcdRe, norm_gcdIm=norm_gcdIm)
+file_name = option['flow'][-5]+"_"+str(option['Re'])
+
+np.savez('norm_alpha_'+file_name, alpha=a, norm_guRe=norm_guRe, norm_guIm=norm_guIm, norm_gcdRe=norm_gcdRe, norm_gcdIm=norm_gcdIm)
+
+#header = 'alpha  Gu_r  Gu_i  Gcd_r  Gcd_i'
+#np.savetxt('norm_alpha'+name_file+'.txt' ,np.transpose([a, norm_guRe, norm_guIm, norm_gcdRe, norm_gcdIm]), fmt='%.4e', delimiter=' ', newline='\n', header=header)
+
 
 
 fig, ay  =  plt.subplots(dpi = 100)

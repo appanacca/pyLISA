@@ -34,7 +34,8 @@ class viz(object):
     """
     def __init__(self, in_data):
         # as input needs the in_data.npz with the simulation results
-        data = np.load(in_data)
+        data = np.load(in_data+".npz")
+        self.file_name = in_data
         self.Re = data['Re']
         self.flow = data['flow']
         self.y = data['y']
@@ -77,7 +78,7 @@ class viz(object):
         #              bbox_inches='tight', dpi=50)
         plt.show()
 
-    def plot_spectrum(self, file_name='spectrum.out', *args):
+    def plot_spectrum(self, postName='spectrum.txt', *args):
             mpl.rc('xtick', labelsize=20)
             mpl.rc('ytick', labelsize=20)
             """ plot the spectrum """
@@ -90,7 +91,7 @@ class viz(object):
             #file_name = raw_input("Please enter spectrum file name: ")
             #np.savetxt(file_name, np.c_[self.eigv_re, self.eigv_im, self.eigv_re_adj, self.eigv_im_adj],
             #        fmt='%1.4e',  header='eigv_re    eigv_im    eigv_re_adj    eigv_im_adj')
-            np.savetxt(file_name, np.c_[self.eigv_re*self.alpha, self.eigv_im*self.alpha, self.eigv_re_adj*self.alpha, self.eigv_im_adj*self.alpha],
+            np.savetxt(self.file_name+postName, np.c_[self.eigv_re*self.alpha, self.eigv_im*self.alpha, self.eigv_re_adj*self.alpha, self.eigv_im_adj*self.alpha],
                             fmt='%1.4e',  header=str(self.option)+'\n'+'eigv_re    eigv_im    eigv_re_adj    eigv_im_adj')
 
             #  for i in np.arange(10):
@@ -311,8 +312,7 @@ class viz(object):
 
 
                 #file_name_fun = raw_input("Please enter function file name: ")
-                file_name_fun = 'fun'
-                np.savetxt(file_name_fun+'.out', np.transpose([self.y, p_re, p_im, p_mod,
+                np.savetxt(self.file_name+"_fun"+'.txt', np.transpose([self.y, p_re, p_im, p_mod,
                 u_re, u_im, u_mod, v_re, v_im, v_mod, p_re_adj, p_im_adj, p_mod_adj,
                 u_re_adj, u_im_adj, u_mod_adj, v_re_adj, v_im_adj, v_mod_adj]), fmt='%1.4e',
                 header=str(self.option)+'\n'+'y   p_re    p_im    p_mod   u_re    u_im    u_mod    v_re    v_im    v_mod \
