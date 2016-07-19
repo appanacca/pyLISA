@@ -32,7 +32,7 @@ f.superpose_spectrum(0.1, 1, 10)
 
 """
 
-a = np.linspace(0.1, 0.5, 9)
+a = np.linspace(0.1, 0.8, 8)
 #c = np.arange(0.1, 1.1, 0.02)
 #b = np.arange(1.1, 4.1, 0.1)
 #a = np.concatenate((c,b))
@@ -46,9 +46,9 @@ norm_gcdIm = np.zeros(len(a))
 
 for i in np.arange(len(a)):
 
-    option = {'flow': 'DATA/H.txt',
+    option = {'flow': 'DATA/J.txt',
               'a_ast': 1.104,
-              'n_points': 300,
+              'n_points': 320,
               'lc': 0.16739,
               'Ymax': 1000,
               'yi': 10,

@@ -4,13 +4,13 @@ import sapy.sensitivity as sn
 import pdb as pdb
 import numpy as np
 
-option = {'flow': 'DATA/H.txt',
+option = {'flow': 'DATA/J.txt',
           'a_ast': 1.104,  #0.552
-          'n_points': 340,
+          'n_points': 330,
           'lc': 0.16739,
           'Ymax': 1000,
           'yi': 5,
-          'alpha': 0.45,  #0.56552
+          'alpha': 0.3  ,  #0.56552
           'Re': 1e5 ,   #157.922677   #1e5
           'variables': 'p_u_v', # v_eta
           'equation': 'LNS_CD',

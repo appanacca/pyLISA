@@ -106,8 +106,8 @@ class viz(object):
             #                          fontsize = 32)
 
 
-            ay.set_ylim([-2.5, 2.5])
-            ay.set_xlim([0.2, 0.8])
+            ay.set_ylim([-2, 1])
+            ay.set_xlim([0.6, 1.2])
             ay.grid()
             # plt.tight_layout()
             #  fig.savefig('RESULTS'+'spectrum_couette.png',
