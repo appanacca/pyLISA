@@ -91,8 +91,8 @@ class viz(object):
             #file_name = raw_input("Please enter spectrum file name: ")
             #np.savetxt(file_name, np.c_[self.eigv_re, self.eigv_im, self.eigv_re_adj, self.eigv_im_adj],
             #        fmt='%1.4e',  header='eigv_re    eigv_im    eigv_re_adj    eigv_im_adj')
-            np.savetxt(self.file_name+postName, np.c_[self.eigv_re*self.alpha, self.eigv_im*self.alpha, self.eigv_re_adj*self.alpha, self.eigv_im_adj*self.alpha],
-                            fmt='%1.4e',  header=str(self.option)+'\n'+'eigv_re    eigv_im    eigv_re_adj    eigv_im_adj')
+            #np.savetxt(self.file_name+postName, np.c_[self.eigv_re*self.alpha, self.eigv_im*self.alpha, self.eigv_re_adj*self.alpha, self.eigv_im_adj*self.alpha],
+            #                fmt='%1.4e',  header=str(self.option)+'\n'+'eigv_re    eigv_im    eigv_re_adj    eigv_im_adj')
 
             #  for i in np.arange(10):
             self.fig, ay = plt.subplots(figsize=(10, 6), dpi=100)

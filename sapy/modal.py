@@ -47,6 +47,12 @@ class fluid(object):
         self.a_ast = option['a_ast']
         self.Fr = option['Froude']
         self.slope = option['slope']
+        self.h = option['h']
+        self.d = option['d']
+        self.y_itf = option['y_itf']
+        self.K11 = option['K11']
+        self.K22 = option['K22']
+
 
     @classmethod
     def init_provide_values(cls, in_data):
@@ -158,6 +164,32 @@ class fluid(object):
             y_inf = 2*self.y[0]  # 2000
             self.y = np.concatenate([np.array([y_inf]), self.y])
             self.y = np.concatenate([self.y, np.array([0])])
+            K = np.sqrt(self.y**2 + 4 * L**2)
+
+            xi = np.zeros((self.N, 4))
+            xi[:, 0] = 8 * L**2 / K**3
+            xi[:, 1] = - 24 * self.y * L**2 / K**5
+            xi[:, 2] = 96 * (self.y**2 - L**2) * L**2 / K**7
+            xi[:, 3] = 480 * self.y * (3 * L**2 - self.y**2) * L**2 / K**9
+
+            # MAP THE QUADRATURE WHEIGTH COEFFICIENT MATRIX
+            self.integ_matrix = self.integ_matrix*map_integral
+
+        elif self.option['mapping'][0] == 'semi_infinite_Darcy':
+            ymax = self.option['Ymax']
+            s = self.y[1:-1]
+            r = (s + 1)/2
+            L = (ymax*np.sqrt(1-r[0]**2))/(2*r[0])
+
+            # DERIVATIVE OF THE MAPPING FUNCTION, NEEDED FOR THE QUADRATURE
+            # MATRIX
+            map_integral = 8*L/(-(self.y + 1)**2 + 4)**(3./2.)
+            map_integral[0] = map_integral[1]*10
+
+            self.y = (L*(s+1))/(np.sqrt((1 - ((s+1)**2)/4))) +self.y_itf
+            y_inf = 2*self.y[0]  # 2000
+            self.y = np.concatenate([np.array([y_inf]), self.y])
+            self.y = np.concatenate([self.y, np.array([self.y_itf])])
             K = np.sqrt(self.y**2 + 4 * L**2)
 
             xi = np.zeros((self.N, 4))
@@ -439,6 +471,10 @@ class fluid(object):
                         -(i/self.alpha)*np.diag(self.aCD*self.U))
             AC3 = + np.diag(self.U) +(i/self.alpha)* delta/self.Re
 
+        elif self.option['equation'] == 'LNS_Darcy':
+            AB2 = + np.diag(self.U) #+(i/self.alpha)* delta/self.Re
+            AC3 = + np.diag(self.U) #+(i/self.alpha)* delta/self.Re
+
         elif self.option['equation'] == 'LNS_turb':
             AB2 = (i*self.alpha*np.diag(self.U) - delta/self.Re -
                    (2*self.lc**2) * (np.dot(np.diag(self.dU), self.D[1]) +
@@ -493,6 +529,8 @@ class fluid(object):
             self.BC_LNS_neu_u_v()
         elif self.option['equation'] == 'LNS_turb_CD':
             self.BC_LNS_neu_u_v()
+        elif self.option['equation'] == 'LNS_Darcy':
+            self.BC_LNS_Darcy()
 
     def BC_LNS_neu_u_v(self):
         idx_bc = np.array([self.N, 2*self.N, 2*self.N - 1, 3*self.N - 1])
@@ -506,6 +544,18 @@ class fluid(object):
 
         self.A[2*self.N, 2*self.N] = 1
         self.A[3*self.N - 1, 3*self.N - 1] = 1
+
+        # print (self.A, self.B)
+    def BC_LNS_Darcy(self):
+        idx_bc = np.array([2*self.N, 3*self.N -1])
+        self.A[idx_bc, :] = np.zeros(3*self.N)
+        self.B[idx_bc, :] = np.zeros(3*self.N)
+
+        self.A[2*self.N, 2*self.N] = 1
+        self.A[3*self.N - 1, 3*self.N - 1] = 1
+
+        #self.A[3*self.N - 1, self.N] = 100*np.ones(3*self.N)
+        self.A[3*self.N - 1, self.N - 1] = 1
 
         # print (self.A, self.B)
 

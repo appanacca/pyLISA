@@ -11,11 +11,11 @@ def chebdif(N,M):
 
     I will just paste the explanation from the original chebdif.m file:
 
-    %  The code implements two strategies for enhanced 
-    %  accuracy suggested by W. Don and S. Solomonoff in 
+    %  The code implements two strategies for enhanced
+    %  accuracy suggested by W. Don and S. Solomonoff in
     %  SIAM J. Sci. Comp. Vol. 6, pp. 1253--1268 (1994).
-    %  The two strategies are (a) the use of trigonometric 
-    %  identities to avoid the computation of differences 
+    %  The two strategies are (a) the use of trigonometric
+    %  identities to avoid the computation of differences
     %  x(k)-x(j) and (b) the use of the "flipping trick"
     %  which is necessary since sin t can be computed to high
     %  relative precision when t is small whereas sin (pi-t) cannot.
@@ -27,7 +27,7 @@ def chebdif(N,M):
     I = np.eye(N)  # Identity matrix
     DM = np.zeros((M,N,N))
 
-    n1 = N/2; n2 = int(round(N/2.))  # Indices used for flipping trick
+    n1 = int(N/2); n2 = int(round(N/2.))  # Indices used for flipping trick
 
     k = np.arange(N)  # Compute theta vector
     th = k*np.pi/(N-1)
@@ -48,12 +48,12 @@ def chebdif(N,M):
     C[:,-1] *= 0.5
 
     Z = 1./DX                        # Z contains entries 1/(x(k)-x(j))
-    Z[range(N),range(N)] = 0.        # with zeros on the diagonal.          
+    Z[range(N),range(N)] = 0.        # with zeros on the diagonal.
 
     D = np.eye(N)                    # D contains diff. matrices.
-                                          
+
     for ell in range(M):
-        D = (ell+1)*Z*(C*np.tile(np.diag(D),(N,1)).T - D)  # Off-diagonals    
+        D = (ell+1)*Z*(C*np.tile(np.diag(D),(N,1)).T - D)  # Off-diagonals
         D[range(N),range(N)]= -np.sum(D,axis=1)       # Correct main diagonal of D - Negative sum trick!
         DM[ell,:,:] = D                               # Store current D in DM
 
