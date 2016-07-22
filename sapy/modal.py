@@ -641,36 +641,69 @@ class fluid(object):
                 # (       ) x-momentum
                 # (       ) y-momentum
 
-                I = np.identity(self.N)
-                i = (0+1j)
-                delta = self.D[1] - self.alpha**2 * I
+                if self.option['equation'] == 'LNS_CD':
+                    I = np.identity(self.N)
+                    i = (0+1j)
+                    delta = self.D[1] - self.alpha**2 * I
 
-                AA1 = np.zeros((self.N, self.N))
-                AA2 = I
-                AA3 = (i/self.alpha)*D1
+                    AA1 = np.zeros((self.N, self.N))
+                    AA2 = I
+                    AA3 = (i/self.alpha)*D1
 
-                AB1 = I
-                AB2 = U - (i/self.alpha)*U*CD +(i/self.alpha)*(delta/self.Re)
-                AB3 = np.zeros((self.N, self.N))
+                    AB1 = I
+                    AB2 = U - (i/self.alpha)*U*CD +(i/self.alpha)*(delta/self.Re)
+                    AB3 = np.zeros((self.N, self.N))
 
-                AC1 = (i/self.alpha)*D1
-                AC2 = -(i/self.alpha)*dU
-                AC3 = U +(i/self.alpha)*(delta/self.Re)
+                    AC1 = (i/self.alpha)*D1
+                    AC2 = -(i/self.alpha)*dU
+                    AC3 = U +(i/self.alpha)*(delta/self.Re)
 
-                BA1 = BA2 = BA3 = BB1 = BB3 = BC1 = BC2 = np.zeros((self.N, self.N))
-                BB2 = BC3 = I
+                    BA1 = BA2 = BA3 = BB1 = BB3 = BC1 = BC2 = np.zeros((self.N, self.N))
+                    BB2 = BC3 = I
 
-                AA = np.concatenate((AA1, AA2, AA3), axis=1)
-                AB = np.concatenate((AB1, AB2, AB3), axis=1)
-                AC = np.concatenate((AC1, AC2, AC3), axis=1)
+                    AA = np.concatenate((AA1, AA2, AA3), axis=1)
+                    AB = np.concatenate((AB1, AB2, AB3), axis=1)
+                    AC = np.concatenate((AC1, AC2, AC3), axis=1)
 
-                self.C = np.conjugate(np.concatenate((AA, AB, AC)))
+                    self.C = np.conjugate(np.concatenate((AA, AB, AC)))
 
-                BA = np.concatenate((BA1, BA2, BA3), axis=1)
-                BB = np.concatenate((BB1, BB2, BB3), axis=1)
-                BC = np.concatenate((BC1, BC2, BC3), axis=1)
+                    BA = np.concatenate((BA1, BA2, BA3), axis=1)
+                    BB = np.concatenate((BB1, BB2, BB3), axis=1)
+                    BC = np.concatenate((BC1, BC2, BC3), axis=1)
 
-                self.E = np.concatenate((BA, BB, BC))
+                    self.E = np.concatenate((BA, BB, BC))
+
+                elif self.option['equation'] == 'LNS_Darcy':
+                    I = np.identity(self.N)
+                    i = (0+1j)
+                    delta = self.D[1] - self.alpha**2 * I
+
+                    AA1 = np.zeros((self.N, self.N))
+                    AA2 = I
+                    AA3 = (i/self.alpha)*D1
+
+                    AB1 = I
+                    AB2 = U # +(i/self.alpha)*(delta/self.Re)
+                    AB3 = np.zeros((self.N, self.N))
+
+                    AC1 = (i/self.alpha)*D1
+                    AC2 = -(i/self.alpha)*dU
+                    AC3 = U #+(i/self.alpha)*(delta/self.Re)
+
+                    BA1 = BA2 = BA3 = BB1 = BB3 = BC1 = BC2 = np.zeros((self.N, self.N))
+                    BB2 = BC3 = I
+
+                    AA = np.concatenate((AA1, AA2, AA3), axis=1)
+                    AB = np.concatenate((AB1, AB2, AB3), axis=1)
+                    AC = np.concatenate((AC1, AC2, AC3), axis=1)
+
+                    self.C = np.conjugate(np.concatenate((AA, AB, AC)))
+
+                    BA = np.concatenate((BA1, BA2, BA3), axis=1)
+                    BB = np.concatenate((BB1, BB2, BB3), axis=1)
+                    BC = np.concatenate((BC1, BC2, BC3), axis=1)
+
+                    self.E = np.concatenate((BA, BB, BC))
 
 
         elif method == 'disc':
@@ -741,6 +774,18 @@ class fluid(object):
                 self.C[2*self.N, 2*self.N] = 1
                 self.C[3*self.N - 1, 3*self.N - 1] = 1
 
+            elif self.option['equation'] == 'LNS_Darcy':
+                idx_bc = np.array([2*self.N, 3*self.N -1])
+                self.C[idx_bc, :] = np.zeros(3*self.N)
+                self.E[idx_bc, :] = np.zeros(3*self.N)
+
+                self.C[2*self.N, 2*self.N] = 1
+                self.C[3*self.N - 1, 3*self.N - 1] = 1
+
+                #self.A[3*self.N - 1, self.N] = 100*np.ones(3*self.N)
+                self.C[3*self.N - 1, self.N - 1] = 1
+
+                # print (self.A, self.B)
 
     @nb.jit
     def solve_eig_adj(self):

@@ -203,32 +203,50 @@ class sensitivity(object):
 
 
         elif self.option['variables'] == 'p_u_v':
-            v = self.eigf[2*self.N:3*self.N, self.idx]
-            v_adj = self.eigf_adj[2*self.N:3*self.N, self.idx]
+            print(self.idx)
+            p = self.eigf[:,self.idx][0:self.N]
+            u = self.eigf[:,self.idx][self.N:2*self.N]
+            v = self.eigf[:,self.idx][2*self.N:3*self.N]
 
-            u = self.eigf[self.N:2*self.N, self.idx]
-            u_adj = self.eigf_adj[self.N:2*self.N, self.idx]
+            p_adj = self.eigf_adj[:,self.idx][0:self.N]
+            u_adj = self.eigf_adj[:,self.idx][self.N:2*self.N]
+            v_adj = self.eigf_adj[:,self.idx][2*self.N:3*self.N]
 
-            p = self.eigf[0:self.N, self.idx]
-            p_adj = self.eigf_adj[0:self.N, self.idx]
+            const_A = 1./np.max( np.sqrt(np.real(u)**2 +np.imag(u)**2))
+
+            v = v*const_A
+            u = u*const_A
+            p = p*const_A
 
             v_adj_conj = np.conjugate(v_adj)
             u_adj_conj = np.conjugate(u_adj)
 
+
             f_norm = v_adj_conj*v + u*u_adj_conj
-            normaliz = np.sum(self.integ_matrix*f_norm)
+            #normaliz = np.sum(self.integ_matrix*f_norm)
+            normaliz = -np.trapz(f_norm[100:], self.y[100:])
+
+            const_B = (1./normaliz)
 
             I = np.eye(len(v))
             i = (0 +1j)
 
+            v_adj_conj = v_adj_conj*const_B
+            u_adj_conj = u_adj_conj*const_B
+
             d_uv = np.gradient(v*u_adj_conj) / np.gradient(self.y)
 
             self.Gu = ((-i/self.alpha)*self.aCD*u*u_adj_conj +
-                    (i/self.alpha)*d_uv #np.dot(self.D[0], v*u_adj_conj)
-                    +v*v_adj_conj +u*u_adj_conj)/normaliz
+                                (i/self.alpha)*d_uv #np.dot(self.D[0], v*u_adj_conj)
+                                +v*v_adj_conj +u*u_adj_conj)#/normaliz
 
-            self.Gcd = ((-(i*self.a_ast)/self.alpha)*self.U*u*u_adj_conj)/normaliz
+            self.Gcd = ((-(i*self.a_ast)/self.alpha)*self.U*u*u_adj_conj)#/normaliz
 
+
+            f_norm = v_adj_conj*v + u*u_adj_conj
+            normaliz = -np.trapz(f_norm[100:], self.y[100:])
+
+            print("normaliz: ", normaliz)
 
             ######## ATTENTION;  HERE I TRANSFORM THE SENSITIVITY FROM delta_C to delta_OMEGA
             #self.Gu = self.Gu*self.alpha
