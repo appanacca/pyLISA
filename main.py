@@ -13,15 +13,15 @@ option = {'flow': 'DATA/G.txt',
           'alpha': 0.47895,  #0.56552
           'Re': 3450 ,   #157.922677   #1e5
           'variables': 'p_u_v', # v_eta
-          'equation': 'LNS_CD',
-          'mapping': ['semi_infinite_PB', [0, (46.7/13.8)]],
+          'equation': 'LNS_Darcy',
+          'mapping': ['semi_infinite_Darcy', [0, (46.7/13.8)]],
           'Froude': 0.02,
           'slope': 1.3e-5,
           'd': 0.64,
           'h': 13.8,
-          'y_itf': 0.5,
-          'K11': 3.896e-2,   # valid only for case H
-          'K22': 4.677e-2 }
+          'y_itf': 0.6,
+          'K11': 0.1024,   # valid only for case H
+          'K22': 0.1151 }
 
 
 f = sa.fluid(option)

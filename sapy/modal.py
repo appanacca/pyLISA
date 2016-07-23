@@ -554,10 +554,12 @@ class fluid(object):
         self.A[2*self.N, 2*self.N] = 1
         self.A[3*self.N - 1, 3*self.N - 1] = 1
 
-        #self.A[3*self.N - 1, self.N] = 100*np.ones(3*self.N)
-        self.A[3*self.N - 1, self.N - 1] = 1
+        self.theta = self.alpha*np.sqrt(self.K11/self.K22)*self.y_itf
+        self.beta = self.Re*(self.d/(self.a_ast*self.h))*np.sqrt(self.K11*self.K22)*self.alpha*np.tanh(self.theta)
 
-        # print (self.A, self.B)
+        self.A[3*self.N - 1, self.N - 1] = 1*self.beta
+        print("beta: ", self.beta)
+
 
     def BC_LNS_neu_v(self):
         idx_bc = np.array([2*self.N, 3*self.N - 1])
@@ -697,7 +699,8 @@ class fluid(object):
                     AB = np.concatenate((AB1, AB2, AB3), axis=1)
                     AC = np.concatenate((AC1, AC2, AC3), axis=1)
 
-                    self.C = np.conjugate(np.concatenate((AA, AB, AC)))
+                    #self.C = -np.conjugate(np.concatenate((AA, AB, AC)))
+                    self.C = (np.concatenate((AA, AB, AC)))
 
                     BA = np.concatenate((BA1, BA2, BA3), axis=1)
                     BB = np.concatenate((BB1, BB2, BB3), axis=1)
@@ -783,7 +786,7 @@ class fluid(object):
                 self.C[3*self.N - 1, 3*self.N - 1] = 1
 
                 #self.A[3*self.N - 1, self.N] = 100*np.ones(3*self.N)
-                self.C[3*self.N - 1, self.N - 1] = 1
+                self.C[3*self.N - 1, self.N - 1] = 1*self.beta
 
                 # print (self.A, self.B)
 
