@@ -155,6 +155,8 @@ class fluid(object):
             r = (s + 1)/2
             L = (ymax*np.sqrt(1-r[0]**2))/(2*r[0])
 
+
+
             # DERIVATIVE OF THE MAPPING FUNCTION, NEEDED FOR THE QUADRATURE
             # MATRIX
             map_integral = 8*L/(-(self.y + 1)**2 + 4)**(3./2.)
@@ -180,6 +182,7 @@ class fluid(object):
             s = self.y[1:-1]
             r = (s + 1)/2
             L = (ymax*np.sqrt(1-r[0]**2))/(2*r[0])
+
 
             # DERIVATIVE OF THE MAPPING FUNCTION, NEEDED FOR THE QUADRATURE
             # MATRIX
@@ -421,7 +424,7 @@ class fluid(object):
     def solve_eig(self):
         """ solve the eigenvalues problem with the LINPACK subrutines"""
         self.eigv, self.eigf = lin.eig(self.A, self.B)
-        # self.eigv, self.eigf = lins.eigs(self.A, k=10, M=self.B)
+        #self.eigv, self.eigf = lins.eigs(self.A, k=10, M=self.B, which='LI')
         # doesent work ARPACK problems with Arnoldi factorization
 
         # remove the infinite and nan eigenvectors, and their eigenfunctions
@@ -795,7 +798,7 @@ class fluid(object):
         """ solve the eigenvalues problem with the LINPACK subrutines"""
         self.eigv_adj, self.eigf_adj = lin.eig(self.C, self.E)
 
-        # self.eigv_adj, self.eigf_adj = lins.eigs(self.C, k=10, M=self.E)
+        #self.eigv_adj, self.eigf_adj = lins.eigs(self.C, k=10, M=self.E, which='SI')
         # doesent work ARPACK problems with Arnoldi factorization
 
         # remove the infinite and nan eigenvectors, and their eigenfunctions
@@ -941,7 +944,9 @@ class fluid(object):
                  eigv=self.eigv, eigf=self.eigf, D=self.D,
                  adj_eigv=self.eigv_adj, adj_eigf=self.eigf_adj,
                  integ_matrix=self.integ_matrix, alpha=self.alpha,
-                 a_ast=self.a_ast, Re=self.Re, flow=self.option['flow'])
+                 a_ast=self.a_ast, Re=self.Re, flow=self.option['flow'],
+                 d=self.d, h=self.h, K11=self.K11, K22=self.K22,
+                 y_itf=self.y_itf)
 
     def check_adj(self):
         H = (self.A - self.eigv[16]*self.B)

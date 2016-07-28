@@ -64,6 +64,12 @@ class sensitivity(object):
         self.a_ast = self.option['a_ast']
         self.integ_matrix = data['integ_matrix']
 
+        self.d = self.option['d']
+        self.h = self.option['h']
+        self.y_itf = self.option['y_itf']
+        self.K11 = self.option['K11']
+        self.K22 = self.option['K22']
+
         self.idx = idx   # idx is the index of the eigenvalue
         # which is the one who want to compute the sensitivity
         # the idx should be find with the bokeh plot or the
@@ -192,6 +198,7 @@ class sensitivity(object):
             d_vv = np.gradient(vv) / np.gradient(self.y)
             dd_vv = np.gradient(d_vv) / np.gradient(self.y)
 
+
             self.Gu = (v_adj_conj * np.dot((self.D[1] - I*self.alpha**2),v) -
                   dd_vv - (i/self.alpha) * dv_adj * np.dot(self.D[0],  v) * self.aCD)
 
@@ -234,13 +241,35 @@ class sensitivity(object):
             v_adj_conj = v_adj_conj*const_B
             u_adj_conj = u_adj_conj*const_B
 
+            p_adj = u_adj*np.conjugate(const_B)
+
+
             d_uv = np.gradient(v*u_adj_conj) / np.gradient(self.y)
 
-            self.Gu = ((-i/self.alpha)*self.aCD*u*u_adj_conj +
-                                (i/self.alpha)*d_uv #np.dot(self.D[0], v*u_adj_conj)
-                                +v*v_adj_conj +u*u_adj_conj)#/normaliz
+            if self.option['equation'] == 'LNS_Darcy':
 
-            self.Gcd = ((-(i*self.a_ast)/self.alpha)*self.U*u*u_adj_conj)#/normaliz
+                self.Gu = ((i/self.alpha)*d_uv #np.dot(self.D[0], v*u_adj_conj)
+                                    +v*v_adj_conj +u*u_adj_conj)#/normaliz
+
+                self.theta = self.alpha*np.sqrt(self.K11/self.K22)*self.y_itf
+                print("theta: ", self.theta)
+
+
+                #self.beta = self.Re*(self.d/(self.a_ast*self.h))*np.sqrt(self.K11*self.K22)*self.alpha*np.tanh(self.theta)
+
+                self.GK11 = -0.5*self.Re*i*(self.d/(self.a_ast*self.h))*p[-1]*np.conjugate(p_adj[-1])*(np.sqrt(self.K22/self.K11)*np.tanh(self.theta) +(self.alpha*self.y_itf)/(np.cosh(self.theta)**2))
+                self.GK22 = -0.5*self.Re*i*(self.d/(self.a_ast*self.h))*(self.K11/self.K22)*p[-1]*np.conjugate(p_adj[-1])*(np.sqrt(self.K22/self.K11)*np.tanh(self.theta) -(self.alpha*self.y_itf)/(np.cosh(self.theta)**2))
+
+
+            else:
+                self.Gu = ((-i/self.alpha)*self.aCD*u*u_adj_conj +
+                        (i/self.alpha)*d_uv #np.dot(self.D[0], v*u_adj_conj)
+                        +v*v_adj_conj +u*u_adj_conj)#/normaliz
+
+                self.Gcd = ((-(i*self.a_ast)/self.alpha)*self.U*u*u_adj_conj)#/normaliz
+
+                np.savetxt(self.file_name+"_green"+".txt", np.c_[self.y, np.abs(self.Gu), np.abs(self.Gcd), np.real(self.Gu), np.imag(self.Gu), np.real(self.Gcd), np.imag(self.Gcd)],
+                                            fmt='%1.4e',  header=str(self.option)+'\n'+'\n'+'MAX |self.Gu|:'+str(np.max(np.abs(self.Gu)))+'MAX |self.Gcd|:'+str(np.max(np.abs(self.Gcd)))+'\n'+'y   |self.Gu|    |self.Gcd|    self.Gu_real     self.Gu_imag     self.Gcd_real    self.Gcd_imag')
 
 
             f_norm = v_adj_conj*v + u*u_adj_conj
@@ -248,12 +277,11 @@ class sensitivity(object):
 
             print("normaliz: ", normaliz)
 
+
             ######## ATTENTION;  HERE I TRANSFORM THE SENSITIVITY FROM delta_C to delta_OMEGA
             #self.Gu = self.Gu*self.alpha
             #self.Gcd = self.Gcd*self.alpha
 
-            np.savetxt(self.file_name+"_green"+".txt", np.c_[self.y, np.abs(self.Gu), np.abs(self.Gcd), np.real(self.Gu), np.imag(self.Gu), np.real(self.Gcd), np.imag(self.Gcd)],
-                            fmt='%1.4e',  header=str(self.option)+'\n'+'\n'+'MAX |self.Gu|:'+str(np.max(np.abs(self.Gu)))+'MAX |self.Gcd|:'+str(np.max(np.abs(self.Gcd)))+'\n'+'y   |self.Gu|    |self.Gcd|    self.Gu_real     self.Gu_imag     self.Gcd_real    self.Gcd_imag')
 
 
         if(self.show_f == True):
@@ -283,7 +311,10 @@ class sensitivity(object):
             plt.show(lines)
 
         if obj == 'norm':
-            return lin.norm(np.real(self.Gu), ord=np.inf), lin.norm(np.imag(self.Gu), ord=np.inf), lin.norm(np.real(self.Gcd), ord=np.inf), lin.norm(np.imag(self.Gcd), ord=np.inf)
+            if self.option['equation'] == 'LNS_Darcy':
+                return lin.norm(np.real(self.Gu), ord=np.inf), lin.norm(np.imag(self.Gu), ord=np.inf), np.abs(np.real(self.GK11)), np.abs(np.imag(self.GK11)), np.abs(np.real(self.GK22)), np.abs(np.imag(self.GK22))
+            else:
+                return lin.norm(np.real(self.Gu), ord=np.inf), lin.norm(np.imag(self.Gu), ord=np.inf), lin.norm(np.real(self.Gcd), ord=np.inf), lin.norm(np.imag(self.Gcd), ord=np.inf)
         elif obj == 'u':
             delta_c = np.sum((self.Gu*self.perturb)*self.integ_matrix)  # +((+i/self.alpha)*v_adj_conj*d_p)*self.integ_matrix)
             return delta_c

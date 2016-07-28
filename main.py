@@ -6,11 +6,11 @@ import numpy as np
 
 option = {'flow': 'DATA/G.txt',
           'a_ast': 0.552,  #0.552
-          'n_points': 300,
+          'n_points': 310,
           'lc': 0.16739,
           'Ymax': 1000,
           'yi': 5,
-          'alpha': 0.47895,  #0.56552
+          'alpha':  0.48125, #0.479,  #0.56552
           'Re': 3450 ,   #157.922677   #1e5
           'variables': 'p_u_v', # v_eta
           'equation': 'LNS_Darcy',
@@ -20,8 +20,8 @@ option = {'flow': 'DATA/G.txt',
           'd': 0.64,
           'h': 13.8,
           'y_itf': 0.6,
-          'K11': 0.1024,   # valid only for case H
-          'K22': 0.1151 }
+          'K11': 0.0512,   # valid only for case G
+          'K22': 0.0575 }
 
 
 f = sa.fluid(option)
@@ -59,10 +59,10 @@ v.plot_spectrum()
 #f.omega_alpha_curves(0.1, 1, 20, 0.9, 1.1, 'G_RE_1e5')
 
 idx = np.argmax(np.imag(f.eigv))
-om = sn.sensitivity(file_name, idx, show_f=True)
-a, b, c, d = om.c_per(obj='norm')
-print (a, b, c,d)
+om = sn.sensitivity(file_name, idx, show_f=False)
+a, b, c, d, e, g= om.c_per(obj='norm')
+print (a, b, c,d, e, g)
 
-f.omega_alpha_curves(0.1, 1, 20, 0.7, 1, name_file=file_name)
+f.omega_alpha_curves(0.1, 1, 20, 0.5, 1.4, name_file=file_name)
 #om.sens_spectrum('ke_cd_N001_puv.png', 1e-7, 1e-4, 189, obj='u', shape='gauss') # eps, gamma
 #om.validation(1, 1e-7, 1e-4, idx, 'gauss')
