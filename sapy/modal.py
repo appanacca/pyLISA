@@ -26,11 +26,6 @@ import bokeh.models as bkmd
 import pdb as pdb
 import scipy.integrate as integ
 
-import slepc4py
-import sys
-from petsc4py import PETSc
-from slepc4py import SLEPc
-
 
 class fluid(object):
     """
@@ -428,7 +423,11 @@ class fluid(object):
 
     def solve_eig(self):
         if self.solver == 'PETSc':
-
+            
+                import slepc4py
+                import sys
+                from petsc4py import PETSc
+                from slepc4py import SLEPc
 
                 opts = PETSc.Options()
                 n = opts.getInt('n', self.N)
