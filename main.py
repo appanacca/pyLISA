@@ -1,8 +1,15 @@
+import slepc4py
+import sys
+from petsc4py import PETSc
+from slepc4py import SLEPc
+
 import sapy.modal as sa
 import sapy.post as po
 import sapy.sensitivity as sn
 import pdb as pdb
 import numpy as np
+
+
 
 option = {'flow': 'DATA/G.txt',
           'a_ast': 0.552,  #0.552
@@ -21,7 +28,8 @@ option = {'flow': 'DATA/G.txt',
           'h': 13.8,
           'y_itf': 0.6,
           'K11': 0.0512,   # valid only for case G
-          'K22': 0.0575 }
+          'K22': 0.0575,
+          'solver': 'PETSc'}
 
 
 f = sa.fluid(option)

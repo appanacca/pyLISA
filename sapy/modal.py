@@ -9,7 +9,6 @@ Created on Mon May 19 00:37:38 2014
 
 import numpy as np
 import matplotlib.pyplot as plt
-import sys as sys
 import sapy.chebdif as cb
 import sapy.clencurt as cc_int
 import scipy.linalg as lin
@@ -26,6 +25,11 @@ import bokeh.models as bkmd
 
 import pdb as pdb
 import scipy.integrate as integ
+
+import slepc4py
+import sys
+from petsc4py import PETSc
+from slepc4py import SLEPc
 
 
 class fluid(object):
@@ -52,6 +56,7 @@ class fluid(object):
         self.y_itf = option['y_itf']
         self.K11 = option['K11']
         self.K22 = option['K22']
+        self.solver = option['solver']
 
 
     @classmethod
@@ -420,8 +425,93 @@ class fluid(object):
         self.A[-1, -1] = 1
         self.B[-1, :] = self.A[-1, :]*eps
 
-    @nb.jit
+
     def solve_eig(self):
+        if self.solver == 'PETSc':
+
+
+                opts = PETSc.Options()
+                n = opts.getInt('n', self.N)
+
+                A = PETSc.Mat().create()
+                A.setSizes([n,n])
+                A.setFromOptions()
+                A.setUp()
+                A = PETSc.Mat().createDense(size=self.A.shape, array=self.A)
+                A.assemble()
+
+                B = PETSc.Mat().create()
+                B.setSizes([n,n])
+                B.setFromOptions()
+                B.setUp()
+                B = PETSc.Mat().createDense(size=self.B.shape, array=self.B)
+                B.assemble()
+
+                E = SLEPc.EPS()
+                E.create()
+                E.setOperators(A,B)
+                E.setProblemType(SLEPc.EPS.ProblemType.PGNHEP)
+                E.setFromOptions()
+                E.solve()
+
+                Print = PETSc.Sys.Print
+
+                Print()
+                Print("******************************")
+                Print("*** SLEPc Solution Results ***")
+                Print("******************************")
+                Print()
+
+                its = E.getIterationNumber()
+                Print("Number of iterations of the method: %d" % its)
+
+                eps_type = E.getType()
+                Print("Solution method: %s" % eps_type)
+
+                nev, ncv, mpd = E.getDimensions()
+                Print("Number of requested eigenvalues: %d" % nev)
+
+
+                tol, maxit = E.getTolerances()
+                Print("Stopping condition: tol=%.4g, maxit=%d" % (tol, maxit))
+
+
+                nconv = E.getConverged()
+                Print("Number of converged eigenpairs %d" % nconv)
+
+                vec_k = np.zeros(n)*(0 +1j)
+                vec_vr = np.zeros([n,n])*(0 +1j)
+                vec_vi = np.zeros([n,n])*(0 +1j)
+
+                if nconv > 0:
+                    # Create the results vectors
+                    vr, wr = A.getVecs()
+                    vi, wi = A.getVecs()
+                    #
+                    Print()
+                    Print("        k          ||Ax-kx||/||kx|| ")
+                    Print("----------------- ------------------")
+                    for i in range(nconv):
+                        k = E.getEigenpair(i, vr, vi)
+                        er = PETSc.Vec.getArray(vr)
+                        ei = PETSc.Vec.getArray(vi)
+                        vec_k[i] = k
+                        vec_vr[i] = er
+                        vec_vi[i] = ei
+
+                        error = E.computeError(i)
+
+                        if k.imag != 0.0:
+                            Print(" %9f%+9f j %12g" % (k.real, k.imag, error))
+                        else:
+                            Print(" %12f      %12g" % (k.real, error))
+                    Print()
+
+
+                self.eigv = vec_k
+                self.eigf = vec_vr + vec_vi
+
+
         """ solve the eigenvalues problem with the LINPACK subrutines"""
         self.eigv, self.eigf = lin.eig(self.A, self.B)
         #self.eigv, self.eigf = lins.eigs(self.A, k=10, M=self.B, which='LI')
